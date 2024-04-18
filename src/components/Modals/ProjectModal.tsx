@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { ProjectType } from "../../Types/projectType";
-import { API } from "../../api";
 
 export default function ProjectModal({
   projectData,
@@ -33,7 +32,6 @@ export default function ProjectModal({
         id: crypto.randomUUID(),
         name: projectName,
         description: projectDescription,
-        isSelected: false,
       };
       addProject(newProject);
     }
@@ -45,23 +43,23 @@ export default function ProjectModal({
         id: projectData.id,
         name: projectName,
         description: projectDescription,
-        isSelected: false,
       };
       editProject(editedProject);
     }
   }
 
   return (
-    <div className="fixed w-full h-full">
+    <div className="fixed w-full h-full -mt-40">
       {!isModalHidden && (
         <>
           <div
             onClick={hide}
-            className=" bg-black opacity-60 w-full h-full absolute blur-sm"
+            className=" bg-black opacity-60 w-full h-full absolute"
           ></div>
           <div className="flex items-center justify-center w-full h-full">
             <div className="flex w-1/3 h-60 rounded-md p-5 bg-purple-300 relative justify-evenly flex-col ">
               <input
+                className="p-1"
                 type="text"
                 placeholder="Project name"
                 value={projectName}
@@ -69,6 +67,7 @@ export default function ProjectModal({
               />
               <input
                 type="text"
+                className="p-1"
                 placeholder="Project description"
                 value={projectDescription}
                 onChange={(e) => setprojectDescription(e.target.value)}
@@ -78,7 +77,7 @@ export default function ProjectModal({
                   onClick={projectData ? editProjectHandler : addProjectHandler}
                   className="bg-purple-400 w-fit p-3 rounded-xl flex cursor-pointer hover:bg-purple-500"
                 >
-                  {projectData ? "Edit" : "Add"}
+                  {projectData ? "Save" : "Add"}
                 </button>
                 <button
                   onClick={hide}

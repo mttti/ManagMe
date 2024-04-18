@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { ProjectType } from "../Types/projectType";
-import { API } from "../api";
+import { ProjectApi } from "../api";
 import Project from "./Project";
 import ProjectModal from "./Modals/ProjectModal";
 
 export default function Projects() {
-  const api = new API();
+  const api = new ProjectApi();
   const [allProjects, setAllProjects] = useState<ProjectType[]>([]);
   const [hasProjects, setHasProjects] = useState(true);
   const [isModalHidden, setIsModalHidden] = useState(true);
@@ -27,6 +27,12 @@ export default function Projects() {
       api.addProject(project);
       setAllProjects((prevState) => [project, ...prevState]);
       toggleModal();
+    } catch (error) {}
+  }
+
+  function pinProject(project: ProjectType) {
+    try {
+      api.addPinnedProject(project);
     } catch (error) {}
   }
 
@@ -68,7 +74,7 @@ export default function Projects() {
       <div className="flex flex-col items-center ">
         <div
           onClick={toggleModal}
-          className="bg-purple-400 w-fit mt-40 p-3 rounded-xl flex cursor-pointer hover:bg-purple-500"
+          className="bg-purple-400 w-fit p-3 rounded-xl flex cursor-pointer hover:bg-purple-500"
         >
           Add a new project
         </div>
@@ -79,6 +85,7 @@ export default function Projects() {
               project={project}
               deleteProject={deleteProject}
               editProject={editProjectToggle}
+              pinProject={pinProject}
             />
           ))
         ) : (
