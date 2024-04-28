@@ -96,7 +96,9 @@ export default function StoryModal({
               />
               <select
                 name="priority"
-                onChange={(e) => setStoryPriority(e.target.value)}
+                onChange={(e) =>
+                  setStoryPriority(e.target.value as "LOW" | "MEDIUM" | "HIGH")
+                }
               >
                 <option disabled selected>
                   Select priority
@@ -108,7 +110,9 @@ export default function StoryModal({
 
               <select
                 name="status"
-                onChange={(e) => setStoryStatus(e.target.value)}
+                onChange={(e) =>
+                  setStoryStatus(e.target.value as "TODO" | "DOING" | "DONE")
+                }
               >
                 <option disabled selected>
                   Select status

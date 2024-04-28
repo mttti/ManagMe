@@ -16,7 +16,6 @@ export default function Header({ userName }: { userName: string }) {
             <Link to="/all-projects">All projects</Link>
           </p>
           <p>
-            {" "}
             <Link to="/pinned-project">Pinned project</Link>
           </p>
         </div>

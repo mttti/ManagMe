@@ -1,4 +1,5 @@
 import { StoryType } from "../Types/storyType";
+import { Link } from "react-router-dom";
 
 export default function Story({
   story,
@@ -24,6 +25,8 @@ export default function Story({
       <button className="cursor-pointer" onClick={() => deleteStory(story.id)}>
         Delete
       </button>
+      <br />
+      <Link to={`/pinned-project/${story.id}/tasks`}>Tasks</Link>
     </div>
   );
 }

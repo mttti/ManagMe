@@ -1,5 +1,7 @@
 import { ProjectType } from "./Types/projectType";
 import { StoryType } from "./Types/storyType";
+import { TaskType } from "./Types/taskType";
+import { User } from "./User";
 
 export class ProjectApi {
   addProject(data: ProjectType) {
@@ -169,5 +171,137 @@ export class StoryApi {
     } else {
       throw new Error("Can not delete this story");
     }
+  }
+}
+
+export class TaskApi {
+  addTask(data: TaskType) {
+    if (data) {
+      let taskTable: TaskType[] = localStorage.getItem("tasks")
+        ? JSON.parse(localStorage.getItem("tasks")!)
+        : [];
+      taskTable.push(data);
+      localStorage.setItem("tasks", JSON.stringify(taskTable));
+      return data;
+    } else {
+      throw new Error("Failed to add");
+    }
+  }
+
+  getAllTasks() {
+    let allTasks: TaskType[] = [];
+
+    allTasks = JSON.parse(localStorage.getItem("tasks")!);
+
+    if (allTasks) {
+      return allTasks;
+    } else {
+      throw new Error("There are no tasks yet");
+    }
+  }
+
+  getTaskById(id: string) {
+    let allTasks: TaskType[] = localStorage.getItem("tasks")
+      ? JSON.parse(localStorage.getItem("tasks")!)
+      : [];
+    let selectedTask = allTasks.filter((s) => s.id === id);
+    if (selectedTask) {
+      return selectedTask;
+    } else {
+      throw new Error("Task not found");
+    }
+  }
+
+  getTasksByStoryId(storyId: string) {
+    let tasks: TaskType[] = [
+      {
+        id: "string",
+        name: "string",
+        description: "string",
+        priority: "LOW",
+        storyId: "cee8aab1-4460-450e-b7fa-d953c4766ff0",
+        expectedTime: 10,
+        status: "TODO",
+        additonDate: new Date(),
+        startDate: new Date(),
+        finishDate: new Date(),
+        User: undefined,
+      },
+      {
+        id: "strindg",
+        name: "string",
+        description: "string",
+        priority: "LOW",
+        storyId: "cee8aab1-4460-450e-b7fa-d953c4766ff0",
+        expectedTime: 10,
+        status: "TODO",
+        additonDate: new Date(),
+        startDate: new Date(),
+        finishDate: new Date(),
+        User: undefined,
+      },
+      {
+        id: "stridng",
+        name: "straing",
+        description: "string",
+        priority: "LOW",
+        storyId: "cee8aab1-4460-450e-b7fa-d953c4766ff0",
+        expectedTime: 10,
+        status: "TODO",
+        additonDate: new Date(),
+        startDate: new Date(),
+        finishDate: new Date(),
+        User: undefined,
+      },
+    ];
+
+    // return tasks;
+    let allTasks: TaskType[] = this.getAllTasks();
+    let selectedTasks = allTasks.filter((t) => t.storyId === storyId);
+    if (selectedTasks.length > 0) {
+      return selectedTasks;
+    } else {
+      throw new Error("There are no tasks yet");
+    }
+  }
+
+  updateTask(data: TaskType) {
+    let allTasks = this.getAllTasks();
+    let taskId = allTasks.findIndex((s) => s.id === data.id);
+
+    if (taskId >= 0) {
+      allTasks[taskId] = data;
+      localStorage.setItem("tasks", JSON.stringify(allTasks));
+      return 200;
+    } else {
+      throw new Error("Failed to update");
+    }
+  }
+
+  deleteTask(id: string) {
+    let allTasks = this.getAllTasks();
+    let taskId = allTasks.findIndex((s) => s.id === id);
+
+    if (taskId >= 0) {
+      allTasks.splice(taskId, 1);
+      localStorage.setItem("tasks", JSON.stringify(allTasks));
+      return 200;
+    } else {
+      throw new Error("Can not delete this task");
+    }
+  }
+}
+
+export class UserApi {
+  static getAllUsers() {
+    const users = [
+      new User("Jan", "Kowalski", "ADMIN"),
+      new User("Karol", "Mickiewicz", "DEVELOPER"),
+      new User("Bartek", "Ptak", "DEVOPS"),
+    ];
+
+    localStorage.setItem("users", JSON.stringify(users));
+
+    return JSON.parse(localStorage.getItem("users")!);
   }
 }

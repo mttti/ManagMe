@@ -39,7 +39,6 @@ export default function PinnedProject() {
     try {
       storyApi.addStory(story);
       setAllStories((prevState) => [story, ...prevState]);
-      console.log(story);
       toggleModal();
     } catch (error) {
       //   console.log(error);
