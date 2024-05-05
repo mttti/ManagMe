@@ -18,6 +18,9 @@ export default function Header({ userName }: { userName: string }) {
           <p>
             <Link to="/pinned-project">Pinned project</Link>
           </p>
+          <p>
+            <Link to="/sign-in">Sign in</Link>
+          </p>
         </div>
       </header>
     </>
