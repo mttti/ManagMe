@@ -5,6 +5,7 @@ import PinnedProject from "./components/PinnedProject";
 import LoggedUsers from "./components/LoggedUsers";
 import { UserApi } from "./api";
 import Tasks from "./components/Tasks";
+import SignIn from "./components/SignIn";
 
 function App() {
   // let loggedUser = await UserApi.getAllUsers();
@@ -31,6 +32,7 @@ function App() {
                 path="/pinned-project/:storyId/tasks"
                 element={<Tasks></Tasks>}
               ></Route>
+              <Route path="/sign-in" element={<SignIn />}></Route>
             </Routes>
           </section>
           <LoggedUsers />
