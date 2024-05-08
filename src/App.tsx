@@ -1,4 +1,3 @@
-import { useState } from "react";
 import Header from "./components/Header";
 import Projects from "./components/Projects";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
@@ -8,13 +7,18 @@ import { UserApi } from "./api";
 import Tasks from "./components/Tasks";
 
 function App() {
-  let loggedUser = UserApi.getAllUsers();
+  // let loggedUser = await UserApi.getAllUsers();
+  let loggedUsers;
+  async function getLoggedUser() {
+    loggedUsers = await UserApi.getAllUsers();
+  }
+  getLoggedUser();
   // const [pinnedProject, setPinnedProject] = useState("11");
 
   return (
     <>
       <BrowserRouter>
-        <Header userName={loggedUser[0].userData.name} />
+        <Header userName={"janek"} />
         <div className="flex">
           <section className="relative mb-10 w-full ">
             <Routes>

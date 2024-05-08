@@ -12,13 +12,16 @@ export default function Projects() {
   const [editedProject, setEditedProject] = useState<ProjectType>();
 
   useEffect(() => {
-    try {
-      setAllProjects(api.getAllProjects());
-      setHasProjects(true);
-    } catch (error) {
-      setHasProjects(false);
+    async function getProjects() {
+      try {
+        setAllProjects(await api.getAllProjects());
+        setHasProjects(true);
+      } catch (error) {
+        setHasProjects(false);
+      }
     }
-  }, [isModalHidden]);
+    getProjects();
+  }, [isModalHidden, editedProject, allProjects]);
 
   function addNewProject(project: ProjectType) {
     setIsModalHidden(false);
@@ -39,7 +42,7 @@ export default function Projects() {
   function deleteProject(id: string) {
     try {
       api.deleteProject(id);
-      setAllProjects((prevState) => prevState.filter((p) => p.id != id));
+      setAllProjects((prevState) => prevState.filter((p) => p.GUID != id));
     } catch (error) {}
   }
 
@@ -81,7 +84,7 @@ export default function Projects() {
         {hasProjects ? (
           allProjects.map((project) => (
             <Project
-              key={project.id}
+              key={project.GUID}
               project={project}
               deleteProject={deleteProject}
               editProject={editProjectToggle}

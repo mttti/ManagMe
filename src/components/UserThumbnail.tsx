@@ -1,10 +1,10 @@
-import { User } from "../User";
+import { UserType } from "../Types/userType";
 
-export default function UserThumbnail({ user }: { user: User }) {
+export default function UserThumbnail({ user }: { user: UserType }) {
   return (
     <div className="p-4 bg-purple-500 m-3">
       <p>
-        {user.userData.name} {user.userData.surname}, {user.userData.userRole}
+        {user.name} {user.surname}, {user.userRole}
       </p>
     </div>
   );

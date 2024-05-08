@@ -38,7 +38,7 @@ export default function StoryModal({
   function addStoryHandler() {
     if (storyName != "" && storyDescription != "" && typeof storyPriority) {
       const newStory: StoryType = {
-        id: crypto.randomUUID(),
+        GUID: crypto.randomUUID(),
         name: storyName,
         description: storyDescription,
         priority: storyPriority,
@@ -58,7 +58,7 @@ export default function StoryModal({
       storyData
     ) {
       const editedStory: StoryType = {
-        id: storyData.id!,
+        GUID: storyData.GUID!,
         name: storyName,
         description: storyDescription,
         priority: storyPriority,

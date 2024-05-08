@@ -5,7 +5,7 @@ import Task from "./Task";
 import { useEffect, useState } from "react";
 import { TaskType } from "../Types/taskType";
 import TaskModal from "./Modals/TaskModal";
-import { User } from "../User";
+import { UserType } from "../Types/userType";
 
 export default function Tasks() {
   const [hasTasks, setHasTasks] = useState(true);
@@ -18,13 +18,16 @@ export default function Tasks() {
 
   let { storyId } = useParams();
   useEffect(() => {
-    try {
-      const pinnedProject = projectApi.getPinnedProject();
-      setProjectName(pinnedProject.name);
-      setAllTasks(taskApi.getTasksByStoryId(storyId!));
-    } catch (error) {
-      setHasTasks(false);
+    async function get() {
+      try {
+        const pinnedProject = await projectApi.getPinnedProject();
+        setProjectName(pinnedProject.name);
+        setAllTasks(await taskApi.getTasksByStoryId(storyId!));
+      } catch (error) {
+        setHasTasks(false);
+      }
     }
+    get();
   }, [storyId, isModalHidden]);
 
   function addNewTask(task: TaskType) {
@@ -48,13 +51,13 @@ export default function Tasks() {
     setIsModalHidden(false);
   }
 
-  function assignUser(task: TaskType, user: User) {
+  function assignUser(task: TaskType, user: UserType) {
     task.status = "DOING";
     task.startDate = new Date();
-    task.User = user;
+    task.UserId = user.GUID;
     try {
       taskApi.updateTask(task);
-      let taskIndex = allTasks.findIndex((t) => t.id === task.id);
+      let taskIndex = allTasks.findIndex((t) => t.GUID === task.GUID);
       let tasks = [...allTasks];
       tasks[taskIndex] = task;
       setAllTasks(tasks);
@@ -64,7 +67,7 @@ export default function Tasks() {
   function deleteTask(id: string) {
     try {
       taskApi.deleteTask(id);
-      setAllTasks((prevState) => prevState.filter((s) => s.id != id));
+      setAllTasks((prevState) => prevState.filter((s) => s.GUID != id));
     } catch (error) {}
   }
 
@@ -73,7 +76,7 @@ export default function Tasks() {
     task.finishDate = new Date();
     try {
       taskApi.updateTask(task);
-      let taskIndex = allTasks.findIndex((t) => t.id === task.id);
+      let taskIndex = allTasks.findIndex((t) => t.GUID === task.GUID);
       let tasks = [...allTasks];
       tasks[taskIndex] = task;
       setAllTasks(tasks);
@@ -115,7 +118,7 @@ export default function Tasks() {
               .map((task) => (
                 <Task
                   task={task}
-                  key={task.id}
+                  key={task.GUID}
                   projectName={projectName}
                   deleteTask={deleteTask}
                   editTask={editTaskToggle}
@@ -131,7 +134,7 @@ export default function Tasks() {
               .map((task) => (
                 <Task
                   task={task}
-                  key={task.id}
+                  key={task.GUID}
                   projectName={projectName}
                   deleteTask={deleteTask}
                   editTask={editTaskToggle}
@@ -147,7 +150,7 @@ export default function Tasks() {
               .map((task) => (
                 <Task
                   task={task}
-                  key={task.id}
+                  key={task.GUID}
                   projectName={projectName}
                   deleteTask={deleteTask}
                   editTask={editTaskToggle}

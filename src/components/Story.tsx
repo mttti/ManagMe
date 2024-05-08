@@ -12,7 +12,7 @@ export default function Story({
 }) {
   return (
     <div className="bg-purple-300 mt-5 p-2">
-      <p>Id: {story.id}</p>
+      <p>Id: {story.GUID}</p>
       <p>Name: {story.name}</p>
       <p>Description: {story.description}</p>
       <p>Priority: {story.priority}</p>
@@ -22,11 +22,14 @@ export default function Story({
       <button className="mr-5 cursor-pointer" onClick={() => editStory(story)}>
         Edit
       </button>
-      <button className="cursor-pointer" onClick={() => deleteStory(story.id)}>
+      <button
+        className="cursor-pointer"
+        onClick={() => deleteStory(story.GUID)}
+      >
         Delete
       </button>
       <br />
-      <Link to={`/pinned-project/${story.id}/tasks`}>Tasks</Link>
+      <Link to={`/pinned-project/${story.GUID}/tasks`}>Tasks</Link>
     </div>
   );
 }

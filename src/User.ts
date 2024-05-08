@@ -2,7 +2,7 @@ import { UserType } from "./Types/userType";
 
 export class User {
   userData: UserType = {
-    id: crypto.randomUUID(),
+    GUID: crypto.randomUUID(),
     name: "",
     surname: "",
     userRole: "ADMIN",

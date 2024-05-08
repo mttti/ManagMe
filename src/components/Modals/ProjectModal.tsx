@@ -29,7 +29,7 @@ export default function ProjectModal({
   function addProjectHandler() {
     if (projectName != "" && projectDescription != "") {
       const newProject: ProjectType = {
-        id: crypto.randomUUID(),
+        GUID: crypto.randomUUID(),
         name: projectName,
         description: projectDescription,
       };
@@ -40,7 +40,7 @@ export default function ProjectModal({
   function editProjectHandler() {
     if (projectName != "" && projectDescription != "" && projectData) {
       const editedProject: ProjectType = {
-        id: projectData.id,
+        GUID: projectData.GUID,
         name: projectName,
         description: projectDescription,
       };

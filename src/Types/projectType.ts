@@ -1,5 +1,5 @@
 export type ProjectType = {
-  id: string;
+  GUID: string;
   name: string;
   description: string;
 };

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { TaskType } from "../Types/taskType";
-import { User } from "../User";
 import { UserApi } from "../api";
+import { UserType } from "../Types/userType";
 
 export default function Task({
   task,
@@ -16,19 +16,22 @@ export default function Task({
   editTask: (task: TaskType) => void;
   deleteTask: (id: string) => void;
   markAsDone: (task: TaskType) => void;
-  assignUser: (task: TaskType, user: User) => void;
+  assignUser: (task: TaskType, user: UserType) => void;
 }) {
-  const [users, setUsers] = useState<User[]>();
+  const [users, setUsers] = useState<UserType[]>();
   const [assignedUserId, setAssignedUserId] = useState<string>("");
 
   useEffect(() => {
-    try {
-      setUsers(UserApi.getAllUsers());
-    } catch (error) {}
+    async function get() {
+      try {
+        setUsers(await UserApi.getAllUsers());
+      } catch (error) {}
+    }
+    get();
   }, [task]);
 
   function assignUserHandler() {
-    let assignedUser = users?.find((u) => u.userData.id === assignedUserId);
+    let assignedUser = users?.find((u) => u.GUID === assignedUserId);
     if (assignedUser) {
       assignUser(task, assignedUser);
     }
@@ -39,7 +42,9 @@ export default function Task({
       <p>Story id: {task.storyId}</p>
       <p>Name: {task.name}</p>
       <p>Description: {task.description}</p>
-      <p>Date of addition: {new Date(task.additonDate).toLocaleDateString()}</p>
+      <p>
+        Date of addition: {new Date(task.additionDate).toLocaleDateString()}
+      </p>
       <p>Expected execution time: {task.expectedTime}</p>
       <p>Task priority: {task.priority}</p>
       <p>
@@ -49,8 +54,8 @@ export default function Task({
       </p>
       <p>Completed hours: TODO</p>
       <p>
-        {task.User ? (
-          `Assigned person: ${task.User.userData.name}`
+        {task.UserId ? (
+          `Assigned person: ${task.UserId}`
         ) : (
           <>
             <select
@@ -61,10 +66,10 @@ export default function Task({
                 Select user
               </option>
               {users
-                ?.filter((u) => u.userData.userRole != "ADMIN")
+                ?.filter((u) => u.userRole != "ADMIN")
                 .map((user, index) => (
-                  <option value={user.userData.id} key={user.userData.id}>
-                    {user.userData.name}
+                  <option value={user.GUID} key={user.GUID}>
+                    {user.name}
                   </option>
                 ))}
             </select>
@@ -84,7 +89,7 @@ export default function Task({
       )}
       <div className="flex justify-evenly">
         <button onClick={() => editTask(task)}>Edit</button>
-        <button onClick={() => deleteTask(task.id)}>Delete</button>
+        <button onClick={() => deleteTask(task.GUID)}>Delete</button>
       </div>
     </div>
   );

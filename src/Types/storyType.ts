@@ -1,5 +1,5 @@
 export type StoryType = {
-  id: string;
+  GUID: string;
   name: string;
   description: string;
   priority: "LOW" | "MEDIUM" | "HIGH";

@@ -45,14 +45,14 @@ export default function TaskModal({
   function addTaskHandler() {
     if (taskName != "" && taskDesc != "" && taskExecTime != 0) {
       const newTask: TaskType = {
-        id: crypto.randomUUID(),
+        GUID: crypto.randomUUID(),
         name: taskName,
         description: taskDesc,
         priority: taskPriority,
         storyId: storyId,
         expectedTime: taskExecTime,
         status: taskStatus,
-        additonDate: new Date(),
+        additionDate: new Date(),
       };
       addTask(newTask);
     }
@@ -60,14 +60,14 @@ export default function TaskModal({
   function editTaskHandler() {
     if (taskName != "" && taskDesc != "" && taskExecTime != 0) {
       const editedTask: TaskType = {
-        id: task?.id!,
+        GUID: task?.GUID!,
         name: taskName,
         description: taskDesc,
         priority: taskPriority,
         storyId: storyId,
         expectedTime: taskExecTime,
         status: taskStatus,
-        additonDate: task?.additonDate!,
+        additionDate: task?.additionDate!,
         startDate: task?.startDate,
         finishDate: task?.finishDate,
         User: task?.User,

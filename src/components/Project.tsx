@@ -15,7 +15,7 @@ export default function Project({
     <div className="w-full bg-purple-700 border-2 border-white p-10">
       <p>Project name: {project.name}</p>
       <p>Project description: {project.description}</p>
-      <p>Project id: {project.id}</p>
+      <p>Project id: {project.GUID}</p>
       <div className="flex justify-end">
         <button
           className="mr-5 cursor-pointer"
@@ -31,7 +31,7 @@ export default function Project({
         </button>
         <button
           className="cursor-pointer"
-          onClick={() => deleteProject(project.id)}
+          onClick={() => deleteProject(project.GUID)}
         >
           Delete
         </button>

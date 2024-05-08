@@ -1,24 +1,27 @@
 import { ProjectType } from "./Types/projectType";
 import { StoryType } from "./Types/storyType";
 import { TaskType } from "./Types/taskType";
-import { User } from "./User";
+const URL = "http://localhost:3000";
 
 export class ProjectApi {
-  addProject(data: ProjectType) {
+  async addProject(data: ProjectType) {
     if (data) {
-      let projectTable: ProjectType[] = this.getAllProjects();
-      projectTable.push(data);
-      localStorage.setItem("projects", JSON.stringify(projectTable));
-      return data;
+      const response = await fetch(`${URL}/project`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
     }
     throw new Error("Failed to add");
   }
 
-  getProjectById(id: string) {
-    let allProjects = this.getAllProjects();
-
-    let project = allProjects.findIndex((p) => p.id === id);
-
+  async getProjectById(id: string) {
+    const response = await fetch(`${URL}/project/${id}`);
+    const object = await response.json();
+    let project = object.data;
     if (project) {
       return project;
     } else {
@@ -26,11 +29,11 @@ export class ProjectApi {
     }
   }
 
-  getAllProjects() {
+  async getAllProjects() {
     let allProjects: ProjectType[] = [];
-
-    allProjects = JSON.parse(localStorage.getItem("projects")!);
-
+    const response = await fetch(`${URL}/project`);
+    const object = await response.json();
+    allProjects = object.data;
     if (allProjects) {
       return allProjects;
     } else {
@@ -38,86 +41,130 @@ export class ProjectApi {
     }
   }
 
-  updateProject(data: ProjectType) {
-    let allProjects = this.getAllProjects();
-    let projectId = allProjects.findIndex((p) => p.id === data.id);
-
-    if (projectId >= 0) {
-      allProjects[projectId] = data;
-      localStorage.setItem("projects", JSON.stringify(allProjects));
-      if (this.isPinned(data.id)) {
-        this.addPinnedProject(data);
+  async updateProject(data: ProjectType) {
+    if (data) {
+      if (await this.isPinned(data.GUID)) {
+        console.log(this.isPinned(data.GUID));
+        await this.updatePinnedProject(data);
       }
-      return 200;
+      const response = await fetch(`${URL}/project`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
     } else {
       throw new Error("Failed to update");
     }
   }
 
-  deleteProject(id: string) {
-    let allProjects = this.getAllProjects();
-    let projectId = allProjects.findIndex((p) => p.id === id);
-
-    if (projectId >= 0) {
-      allProjects.splice(projectId, 1);
-      localStorage.setItem("projects", JSON.stringify(allProjects));
-      if (this.isPinned(id)) {
-        localStorage.removeItem("pinnedProject");
+  async deleteProject(id: string) {
+    if (id) {
+      if (await this.isPinned(id)) {
+        await this.deletePinnedProject(id);
       }
-      return 200;
+      const response = await fetch(`${URL}/project/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      return await response.json();
     } else {
       throw new Error("Can not delete this project");
     }
   }
 
-  private isPinned(id: string) {
-    let pinnedProject = this.getPinnedProject();
-    if (pinnedProject.id === id) {
-      return true;
-    } else return false;
+  private async isPinned(id: string) {
+    try {
+      let pinnedProject = await this.getPinnedProject();
+      if (pinnedProject.GUID === id) {
+        return true;
+      } else return false;
+    } catch (error) {
+      return false;
+    }
   }
 
-  addPinnedProject(data: ProjectType) {
+  async addPinnedProject(data: ProjectType) {
     if (data) {
-      localStorage.setItem("pinnedProject", JSON.stringify(data));
-      return 200;
+      const response = await fetch(`${URL}/pinnedProject`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
     } else {
       throw new Error("Failed to pin project");
     }
   }
 
-  getPinnedProject() {
-    let pinnedProject: ProjectType = JSON.parse(
-      localStorage.getItem("pinnedProject")!
-    );
-
-    if (pinnedProject) {
-      return pinnedProject;
+  async deletePinnedProject(id: string) {
+    if (id) {
+      const response = await fetch(`${URL}/pinnedProject/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      return await response.json();
     } else {
-      throw new Error("Project not found!");
+      throw new Error("Can not delete this project");
+    }
+  }
+
+  async updatePinnedProject(data: ProjectType) {
+    if (data) {
+      console.log("update pined");
+      const response = await fetch(`${URL}/pinnedProject`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
+    } else {
+      throw new Error("Failed to update");
+    }
+  }
+
+  async getPinnedProject() {
+    const response = await fetch(`${URL}/pinnedProject`);
+    const object = await response.json();
+    const pinnedProject = object.data;
+    if (pinnedProject) {
+      return pinnedProject[0];
+    } else {
+      throw new Error("There is no pinned project yet");
     }
   }
 }
 
 export class StoryApi {
-  addStory(data: StoryType) {
+  async addStory(data: StoryType) {
     if (data) {
-      let storyTable: StoryType[] = localStorage.getItem("stories")
-        ? JSON.parse(localStorage.getItem("stories")!)
-        : [];
-      storyTable.push(data);
-      localStorage.setItem("stories", JSON.stringify(storyTable));
-      return data;
-    } else {
-      throw new Error("Failed to add");
+      const response = await fetch(`${URL}/story`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
     }
+    throw new Error("Failed to add");
   }
 
-  getAllStories() {
+  async getAllStories() {
     let allStories: StoryType[] = [];
-
-    allStories = JSON.parse(localStorage.getItem("stories")!);
-
+    const response = await fetch(`${URL}/story`);
+    const object = await response.json();
+    allStories = object.data;
     if (allStories) {
       return allStories;
     } else {
@@ -125,49 +172,52 @@ export class StoryApi {
     }
   }
 
-  getStoryById(id: string) {
-    let allStories: StoryType[] = localStorage.getItem("stories")
-      ? JSON.parse(localStorage.getItem("stories")!)
-      : [];
-    let selectedStory = allStories.filter((s) => s.id === id);
-    if (selectedStory) {
-      return selectedStory;
+  async getStoryById(id: string) {
+    const response = await fetch(`${URL}/story/${id}`);
+    const object = await response.json();
+    let story = object.data;
+    if (story) {
+      return story;
     } else {
       throw new Error("Story not found");
     }
   }
 
-  getStoriesByProjectId(projectId: string) {
-    let allStories = this.getAllStories();
-    let selectedStories = allStories.filter((s) => s.projectId === projectId);
-    if (selectedStories.length > 0) {
-      return selectedStories;
+  async getStoriesByProjectId(projectId: string) {
+    const response = await fetch(`${URL}/story/projectId/${projectId}`);
+    const object = await response.json();
+    let stories = object.data;
+    if (stories.length > 0) {
+      return stories;
     } else {
       throw new Error("There are no stories yet");
     }
   }
 
-  updateStory(data: StoryType) {
-    let allStories = this.getAllStories();
-    let storyId = allStories.findIndex((s) => s.id === data.id);
-
-    if (storyId >= 0) {
-      allStories[storyId] = data;
-      localStorage.setItem("stories", JSON.stringify(allStories));
-      return 200;
+  async updateStory(data: StoryType) {
+    if (data) {
+      const response = await fetch(`${URL}/story`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
     } else {
       throw new Error("Failed to update");
     }
   }
 
-  deleteStory(id: string) {
-    let allStories = this.getAllStories();
-    let storyId = allStories.findIndex((s) => s.id === id);
-
-    if (storyId >= 0) {
-      allStories.splice(storyId, 1);
-      localStorage.setItem("stories", JSON.stringify(allStories));
-      return 200;
+  async deleteStory(id: string) {
+    if (id) {
+      const response = await fetch(`${URL}/story/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      return await response.json();
     } else {
       throw new Error("Can not delete this story");
     }
@@ -175,23 +225,27 @@ export class StoryApi {
 }
 
 export class TaskApi {
-  addTask(data: TaskType) {
+  async addTask(data: TaskType) {
     if (data) {
-      let taskTable: TaskType[] = localStorage.getItem("tasks")
-        ? JSON.parse(localStorage.getItem("tasks")!)
-        : [];
-      taskTable.push(data);
-      localStorage.setItem("tasks", JSON.stringify(taskTable));
-      return data;
+      const response = await fetch(`${URL}/task`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
     } else {
       throw new Error("Failed to add");
     }
   }
 
-  getAllTasks() {
+  async getAllTasks() {
     let allTasks: TaskType[] = [];
 
-    allTasks = JSON.parse(localStorage.getItem("tasks")!);
+    const response = await fetch(`${URL}/task`);
+    const object = await response.json();
+    allTasks = object.data;
 
     if (allTasks) {
       return allTasks;
@@ -200,11 +254,10 @@ export class TaskApi {
     }
   }
 
-  getTaskById(id: string) {
-    let allTasks: TaskType[] = localStorage.getItem("tasks")
-      ? JSON.parse(localStorage.getItem("tasks")!)
-      : [];
-    let selectedTask = allTasks.filter((s) => s.id === id);
+  async getTaskById(id: string) {
+    const response = await fetch(`${URL}/task/${id}`);
+    const object = await response.json();
+    let selectedTask = object.data;
     if (selectedTask) {
       return selectedTask;
     } else {
@@ -212,80 +265,41 @@ export class TaskApi {
     }
   }
 
-  getTasksByStoryId(storyId: string) {
-    let tasks: TaskType[] = [
-      {
-        id: "string",
-        name: "string",
-        description: "string",
-        priority: "LOW",
-        storyId: "cee8aab1-4460-450e-b7fa-d953c4766ff0",
-        expectedTime: 10,
-        status: "TODO",
-        additonDate: new Date(),
-        startDate: new Date(),
-        finishDate: new Date(),
-        User: undefined,
-      },
-      {
-        id: "strindg",
-        name: "string",
-        description: "string",
-        priority: "LOW",
-        storyId: "cee8aab1-4460-450e-b7fa-d953c4766ff0",
-        expectedTime: 10,
-        status: "TODO",
-        additonDate: new Date(),
-        startDate: new Date(),
-        finishDate: new Date(),
-        User: undefined,
-      },
-      {
-        id: "stridng",
-        name: "straing",
-        description: "string",
-        priority: "LOW",
-        storyId: "cee8aab1-4460-450e-b7fa-d953c4766ff0",
-        expectedTime: 10,
-        status: "TODO",
-        additonDate: new Date(),
-        startDate: new Date(),
-        finishDate: new Date(),
-        User: undefined,
-      },
-    ];
-
-    // return tasks;
-    let allTasks: TaskType[] = this.getAllTasks();
-    let selectedTasks = allTasks.filter((t) => t.storyId === storyId);
-    if (selectedTasks.length > 0) {
-      return selectedTasks;
+  async getTasksByStoryId(storyId: string) {
+    const response = await fetch(`${URL}/task/storyId/${storyId}`);
+    const object = await response.json();
+    let tasks = object.data;
+    if (tasks.length > 0) {
+      return tasks;
     } else {
       throw new Error("There are no tasks yet");
     }
   }
 
-  updateTask(data: TaskType) {
-    let allTasks = this.getAllTasks();
-    let taskId = allTasks.findIndex((s) => s.id === data.id);
-
-    if (taskId >= 0) {
-      allTasks[taskId] = data;
-      localStorage.setItem("tasks", JSON.stringify(allTasks));
-      return 200;
+  async updateTask(data: TaskType) {
+    if (data) {
+      const response = await fetch(`${URL}/task`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
     } else {
       throw new Error("Failed to update");
     }
   }
 
-  deleteTask(id: string) {
-    let allTasks = this.getAllTasks();
-    let taskId = allTasks.findIndex((s) => s.id === id);
-
-    if (taskId >= 0) {
-      allTasks.splice(taskId, 1);
-      localStorage.setItem("tasks", JSON.stringify(allTasks));
-      return 200;
+  async deleteTask(id: string) {
+    if (id) {
+      const response = await fetch(`${URL}/task/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      return await response.json();
     } else {
       throw new Error("Can not delete this task");
     }
@@ -293,15 +307,14 @@ export class TaskApi {
 }
 
 export class UserApi {
-  static getAllUsers() {
-    const users = [
-      new User("Jan", "Kowalski", "ADMIN"),
-      new User("Karol", "Mickiewicz", "DEVELOPER"),
-      new User("Bartek", "Ptak", "DEVOPS"),
-    ];
-
-    localStorage.setItem("users", JSON.stringify(users));
-
-    return JSON.parse(localStorage.getItem("users")!);
+  static async getAllUsers() {
+    const response = await fetch(`${URL}/user`);
+    const object = await response.json();
+    const allUsers = object.data;
+    if (allUsers) {
+      return allUsers;
+    } else {
+      throw new Error("There are no users yet");
+    }
   }
 }
