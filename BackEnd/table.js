@@ -16,7 +16,9 @@ const db = new sqlite3.Database(
 //   "CREATE TABLE story(ID INTEGER PRIMARY KEY,GUID text, name varchar(255), description varchar(255), priority, projectId text, date DATE, status, ownerId text )";
 // const sql =
 //   "CREATE TABLE task(ID INTEGER PRIMARY KEY,GUID text, name varchar(255), description varchar(255), priority, storyId text, expectedTime, status, additionDate, startDate, finishDate, userId)";
+// const sql =
+//   "CREATE TABLE user(ID INTEGER PRIMARY KEY,GUID text, name varchar(255), surname varchar(255), userRole, password, login)";
 const sql =
-  "CREATE TABLE user(ID INTEGER PRIMARY KEY,GUID text, name varchar(255), surname varchar(255), userRole, password, login)";
+  "CREATE TABLE refreshToken(ID INTEGER PRIMARY KEY, refreshToken Text)";
 
 db.run(sql);

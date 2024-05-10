@@ -1,8 +1,10 @@
 import express from "express";
 import bodyParser from "body-parser";
+import jwt from "jsonwebtoken";
 
 const cors = require("cors");
 let sql: string;
+const tokenSecret = "secret";
 const jsonParser = bodyParser.json();
 const app = express();
 app.use(jsonParser);
@@ -449,4 +451,97 @@ app.post("/user", (req, res) => {
   } catch (error) {
     return res.json({ status: 400, succes: false });
   }
+});
+
+function generateToken(user: any, exp: string) {
+  const token = jwt.sign({ id: user.id, login: user.login }, tokenSecret, {
+    expiresIn: exp,
+  });
+
+  return token;
+}
+
+function verifyToken(req: any, res: any, next: any) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader?.split(" ")[1];
+
+  if (!token) return res.sendStatus(403);
+
+  jwt.verify(token, tokenSecret, (err: any, user: any) => {
+    if (err) {
+      console.log(err);
+      return res.status(401).send(err.message);
+    }
+    req.user = user;
+    next();
+  });
+}
+
+app.post("/login", (req, res) => {
+  const { login, password } = req.body;
+
+  let user = verifyUser(login, password);
+
+  //let user = verifyUser(login, password);
+  console.log(verifyUser(login, password));
+  if (user != null) {
+    let accessToken = generateToken(user, "15m");
+    let refreshToken = generateToken(user, "2h");
+    sql = "INSERT INTO refreshToken(refreshToken) VALUES (?)";
+    db.run(sql, [refreshToken]);
+    res.json({
+      login: login,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    });
+  } else {
+    //console.log(user);
+    res.status(400).json("Username or password incorrect!");
+  }
+});
+
+async function verifyUser(login: string, password: string) {
+  let user: any = null;
+  sql = "SELECT * FROM user WHERE login=? AND password =?";
+  await db.all(sql, [login, password], (err: any, rows: string | any[]) => {
+    if (err) return;
+    if (rows.length < 1) return;
+    user = rows[0];
+    //console.log(user);
+    return user;
+  });
+  console.log(user);
+  return user;
+}
+
+app.post("/logout", verifyToken, (req, res) => {
+  const refreshToken = req.body.token;
+  console.log(refreshToken);
+  refreshTokens = refreshTokens.filter((token) => token !== refreshToken);
+  res.status(200).json("You logged out successfully!");
+});
+
+app.post("/refreshToken", (req, res) => {
+  const refreshToken = req.body.token;
+  if (!refreshToken) {
+    return res.status(401).json("You are not authenticated!");
+  }
+  if (!refreshTokens.includes(refreshToken)) {
+    return res.status(403).json("Refresh token is not valid!");
+  }
+
+  jwt.verify(refreshToken, tokenSecret, (err: any, user: any) => {
+    err && console.log(err);
+    refreshTokens = refreshTokens.filter((token) => token !== refreshToken);
+
+    const newAccesToken = generateToken(user, "15m");
+    const newRefreshToken = generateToken(user, "2h");
+
+    refreshTokens.push(newRefreshToken);
+
+    res.status(200).json({
+      accessToken: newAccesToken,
+      refreshToken: newRefreshToken,
+    });
+  });
 });
