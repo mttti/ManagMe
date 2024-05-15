@@ -6,12 +6,22 @@ import LoggedUsers from "./components/LoggedUsers";
 import { UserApi } from "./api";
 import Tasks from "./components/Tasks";
 import SignIn from "./components/SignIn";
+import { useEffect, useState } from "react";
 
 function App() {
-  // let loggedUser = await UserApi.getAllUsers();
+  const [loggedUser, setLoggedUser] = useState("");
+  const api = new UserApi();
+
+  useEffect(() => {
+    const userInfo = JSON.parse(localStorage.getItem("loggedUser")!);
+    if (userInfo) {
+      setLoggedUser(userInfo.userName);
+    }
+  }, []);
+
   let loggedUsers;
   async function getLoggedUser() {
-    loggedUsers = await UserApi.getAllUsers();
+    loggedUsers = await api.getAllUsers();
   }
   getLoggedUser();
   // const [pinnedProject, setPinnedProject] = useState("11");
@@ -19,7 +29,7 @@ function App() {
   return (
     <>
       <BrowserRouter>
-        <Header userName={"janek"} />
+        <Header userName={loggedUser} />
         <div className="flex">
           <section className="relative mb-10 w-full ">
             <Routes>

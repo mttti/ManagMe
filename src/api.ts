@@ -1,26 +1,55 @@
+import axios from "axios";
 import { ProjectType } from "./Types/projectType";
 import { StoryType } from "./Types/storyType";
 import { TaskType } from "./Types/taskType";
+import { jwtDecode } from "jwt-decode";
+
 const URL = "http://localhost:3000";
+
+axios.defaults.baseURL = URL;
+
+const axiosGet = axios.create();
+
+axiosGet.interceptors.request.use(
+  async (cfg) => {
+    //const userInfo = null;
+    console.log("xddx");
+    const userInfo = JSON.parse(localStorage.getItem("loggedUser")!);
+    if (userInfo) {
+      const currentDate = new Date();
+      const decodedToken = jwtDecode(userInfo.accessToken);
+      if (decodedToken.exp! * 1000 < currentDate.getTime()) {
+        console.log("refresh");
+        const response = await axios.post("/refreshToken", {
+          refreshToken: userInfo.refreshToken,
+        });
+        userInfo.refreshToken = response.data.refreshToken;
+        userInfo.accessToken = response.data.accessToken;
+        localStorage.setItem("loggedUser", JSON.stringify(userInfo));
+      }
+    }
+
+    return cfg;
+  },
+  (err) => {
+    console.log(err);
+  }
+);
 
 export class ProjectApi {
   async addProject(data: ProjectType) {
     if (data) {
-      const response = await fetch(`${URL}/project`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      return await response.json();
+      const response = await axios.post("/project", data);
+      console.log(response.data);
+      return response;
     }
     throw new Error("Failed to add");
   }
 
   async getProjectById(id: string) {
-    const response = await fetch(`${URL}/project/${id}`);
-    const object = await response.json();
+    // const response = await fetch(`${URL}/project/${id}`);
+    const response = await axios.get(`/project${id}`);
+    const object = await response.data;
     let project = object.data;
     if (project) {
       return project;
@@ -31,8 +60,9 @@ export class ProjectApi {
 
   async getAllProjects() {
     let allProjects: ProjectType[] = [];
-    const response = await fetch(`${URL}/project`);
-    const object = await response.json();
+
+    const response = await axios.get("/project");
+    const object = response.data;
     allProjects = object.data;
     if (allProjects) {
       return allProjects;
@@ -44,17 +74,10 @@ export class ProjectApi {
   async updateProject(data: ProjectType) {
     if (data) {
       if (await this.isPinned(data.GUID)) {
-        console.log(this.isPinned(data.GUID));
         await this.updatePinnedProject(data);
       }
-      const response = await fetch(`${URL}/project`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      return await response.json();
+      const response = await axios.put("/project", data);
+      return await response.data;
     } else {
       throw new Error("Failed to update");
     }
@@ -65,13 +88,8 @@ export class ProjectApi {
       if (await this.isPinned(id)) {
         await this.deletePinnedProject(id);
       }
-      const response = await fetch(`${URL}/project/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      return await response.json();
+      const response = await axios.delete(`/project/${id}`);
+      return response.data;
     } else {
       throw new Error("Can not delete this project");
     }
@@ -90,14 +108,8 @@ export class ProjectApi {
 
   async addPinnedProject(data: ProjectType) {
     if (data) {
-      const response = await fetch(`${URL}/pinnedProject`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      return await response.json();
+      const response = await axios.post("/pinnedProject", data);
+      return await response.data;
     } else {
       throw new Error("Failed to pin project");
     }
@@ -105,13 +117,8 @@ export class ProjectApi {
 
   async deletePinnedProject(id: string) {
     if (id) {
-      const response = await fetch(`${URL}/pinnedProject/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      return await response.json();
+      const response = await axios.delete(`/pinnedProject/${id}`);
+      return await response.data;
     } else {
       throw new Error("Can not delete this project");
     }
@@ -119,23 +126,16 @@ export class ProjectApi {
 
   async updatePinnedProject(data: ProjectType) {
     if (data) {
-      console.log("update pined");
-      const response = await fetch(`${URL}/pinnedProject`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      return await response.json();
+      const response = await axios.put("/pinnedProject", data);
+      return await response.data;
     } else {
       throw new Error("Failed to update");
     }
   }
 
   async getPinnedProject() {
-    const response = await fetch(`${URL}/pinnedProject`);
-    const object = await response.json();
+    const response = await axios.get("/pinnedProject");
+    const object = await response.data;
     const pinnedProject = object.data;
     if (pinnedProject) {
       return pinnedProject[0];
@@ -148,22 +148,16 @@ export class ProjectApi {
 export class StoryApi {
   async addStory(data: StoryType) {
     if (data) {
-      const response = await fetch(`${URL}/story`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      return await response.json();
+      const response = await axios.post("/story", data);
+      return await response.data;
     }
     throw new Error("Failed to add");
   }
 
   async getAllStories() {
     let allStories: StoryType[] = [];
-    const response = await fetch(`${URL}/story`);
-    const object = await response.json();
+    const response = await axios.get("/story");
+    const object = await response.data;
     allStories = object.data;
     if (allStories) {
       return allStories;
@@ -173,8 +167,8 @@ export class StoryApi {
   }
 
   async getStoryById(id: string) {
-    const response = await fetch(`${URL}/story/${id}`);
-    const object = await response.json();
+    const response = await axios.get(`/story${id}`);
+    const object = await response.data;
     let story = object.data;
     if (story) {
       return story;
@@ -184,8 +178,8 @@ export class StoryApi {
   }
 
   async getStoriesByProjectId(projectId: string) {
-    const response = await fetch(`${URL}/story/projectId/${projectId}`);
-    const object = await response.json();
+    const response = await axios.get(`/story/projectId/${projectId}`);
+    const object = await response.data;
     let stories = object.data;
     if (stories.length > 0) {
       return stories;
@@ -196,14 +190,8 @@ export class StoryApi {
 
   async updateStory(data: StoryType) {
     if (data) {
-      const response = await fetch(`${URL}/story`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      return await response.json();
+      const response = await axios.put("/story", data);
+      return await response.data;
     } else {
       throw new Error("Failed to update");
     }
@@ -211,13 +199,8 @@ export class StoryApi {
 
   async deleteStory(id: string) {
     if (id) {
-      const response = await fetch(`${URL}/story/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      return await response.json();
+      const response = await axios.delete(`/story/${id}`);
+      return await response.data;
     } else {
       throw new Error("Can not delete this story");
     }
@@ -227,14 +210,8 @@ export class StoryApi {
 export class TaskApi {
   async addTask(data: TaskType) {
     if (data) {
-      const response = await fetch(`${URL}/task`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      return await response.json();
+      const response = await axios.post("/task", data);
+      return await response.data;
     } else {
       throw new Error("Failed to add");
     }
@@ -242,9 +219,8 @@ export class TaskApi {
 
   async getAllTasks() {
     let allTasks: TaskType[] = [];
-
-    const response = await fetch(`${URL}/task`);
-    const object = await response.json();
+    const response = await axios.get("/task");
+    const object = await response.data;
     allTasks = object.data;
 
     if (allTasks) {
@@ -255,8 +231,8 @@ export class TaskApi {
   }
 
   async getTaskById(id: string) {
-    const response = await fetch(`${URL}/task/${id}`);
-    const object = await response.json();
+    const response = await axios.get(`/task/${id}`);
+    const object = await response.data;
     let selectedTask = object.data;
     if (selectedTask) {
       return selectedTask;
@@ -266,8 +242,8 @@ export class TaskApi {
   }
 
   async getTasksByStoryId(storyId: string) {
-    const response = await fetch(`${URL}/task/storyId/${storyId}`);
-    const object = await response.json();
+    const response = await axios.get(`/task/storyId/${storyId}`);
+    const object = await response.data;
     let tasks = object.data;
     if (tasks.length > 0) {
       return tasks;
@@ -278,14 +254,8 @@ export class TaskApi {
 
   async updateTask(data: TaskType) {
     if (data) {
-      const response = await fetch(`${URL}/task`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      return await response.json();
+      const response = await axios.put("/task", data);
+      return await response.data;
     } else {
       throw new Error("Failed to update");
     }
@@ -293,13 +263,8 @@ export class TaskApi {
 
   async deleteTask(id: string) {
     if (id) {
-      const response = await fetch(`${URL}/task/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      return await response.json();
+      const response = await axios.delete(`/task/${id}`);
+      return await response.data;
     } else {
       throw new Error("Can not delete this task");
     }
@@ -307,14 +272,37 @@ export class TaskApi {
 }
 
 export class UserApi {
-  static async getAllUsers() {
-    const response = await fetch(`${URL}/user`);
-    const object = await response.json();
+  async getAllUsers() {
+    const response = await axios.get("/user");
+    const object = await response.data;
     const allUsers = object.data;
     if (allUsers) {
       return allUsers;
     } else {
       throw new Error("There are no users yet");
     }
+  }
+
+  async login(login: string, password: string) {
+    const data = {
+      login: login,
+      password: password,
+    };
+    const response = await axios.post("/login", data);
+
+    return response.data;
+  }
+
+  async logout(token: string, refreshToken: string) {
+    const response = await axios.post(
+      "/logout",
+      { token: refreshToken },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
   }
 }

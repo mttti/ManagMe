@@ -5,10 +5,11 @@ import { UserType } from "../Types/userType";
 
 export default function LoggedUsers() {
   const [users, setUsers] = useState<UserType[]>([]);
+  const userApi = new UserApi();
 
   useEffect(() => {
     async function getLoggedUser() {
-      setUsers(await UserApi.getAllUsers());
+      setUsers(await userApi.getAllUsers());
     }
     getLoggedUser();
   }, []);

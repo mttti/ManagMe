@@ -20,11 +20,11 @@ export default function Task({
 }) {
   const [users, setUsers] = useState<UserType[]>();
   const [assignedUserId, setAssignedUserId] = useState<string>("");
-
+  const userApi = new UserApi();
   useEffect(() => {
     async function get() {
       try {
-        setUsers(await UserApi.getAllUsers());
+        setUsers(await userApi.getAllUsers());
       } catch (error) {}
     }
     get();
@@ -55,7 +55,7 @@ export default function Task({
       <p>Completed hours: TODO</p>
       <p>
         {task.UserId ? (
-          `Assigned person: ${task.UserId}`
+          `Assigned person: ${users?.find((u) => u.GUID === task.UserId)?.name}`
         ) : (
           <>
             <select

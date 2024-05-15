@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import { ProjectType } from "../Types/projectType";
 import { ProjectApi, StoryApi } from "../api";
-import { StoryType } from "../Types/storyType";
-import StoryModal from "./Modals/StoryModal";
-import Story from "./Story";
 import Stories from "./Stories";
 
 export default function PinnedProject() {

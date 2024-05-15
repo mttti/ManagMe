@@ -21,7 +21,7 @@ export default function Projects() {
       }
     }
     getProjects();
-  }, [isModalHidden, editedProject, allProjects]);
+  }, [isModalHidden, editedProject]);
 
   function addNewProject(project: ProjectType) {
     setIsModalHidden(false);

@@ -103,10 +103,16 @@ app.put("/project", (req, res) => {
 app.post("/pinnedProject", (req, res) => {
   try {
     const { GUID, name, description } = req.body;
-    sql = "INSERT INTO pinnedProject(GUID, name, description) VALUES(?,?,?)";
-    db.run(sql, [GUID, name, description], (err: any) => {
-      if (err) return res.json({ status: 300, success: false, error: err });
-      console.log("success");
+    sql = "DELETE FROM pinnedProject";
+    db.run(sql, [], (delErr: any) => {
+      if (delErr) {
+        return res.json({ status: 300, success: false, error: delErr });
+      }
+      sql = "INSERT INTO pinnedProject(GUID, name, description) VALUES(?,?,?)";
+      db.run(sql, [GUID, name, description], (err: any) => {
+        if (err) return res.json({ status: 300, success: false, error: err });
+        console.log("success");
+      });
     });
     return res.json({ status: 201, success: true });
   } catch (error) {
@@ -453,6 +459,125 @@ app.post("/user", (req, res) => {
   }
 });
 
+app.post("/login", async (req, res) => {
+  const { login, password } = req.body;
+  verifyUser(login, password)
+    .then((user: any) => {
+      let accessToken = generateToken(user, "15m");
+      let refreshToken = generateToken(user, "2h");
+      sql = "INSERT INTO refreshToken(refreshToken) VALUES (?)";
+      db.run(sql, [refreshToken]);
+      res.json({
+        success: true,
+        login: user.login,
+        userName: user.name,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+      });
+    })
+    .catch((err) => {
+      res
+        .status(400)
+        .json({ success: false, message: "Username or password incorrect!" });
+    });
+});
+
+app.post("/logout", verifyToken, (req, res) => {
+  const refreshToken = req.body.token;
+  console.log(refreshToken);
+  sql = `DELETE FROM refreshToken WHERE refreshToken="${refreshToken}"`;
+  try {
+    db.run(sql, [], (err: any) => {
+      if (err) return res.json({ status: 300, success: false, error: err });
+    });
+    return res.json({
+      status: 200,
+      success: true,
+      message: "You logged out successfully!",
+    });
+  } catch (error) {
+    return res.json({
+      status: 400,
+      succes: false,
+      message: "Failed to logout",
+    });
+  }
+});
+
+app.post("/refreshToken", (req, res) => {
+  const refreshToken = req.body.token;
+  if (!refreshToken) {
+    return res.status(401).json("You are not authenticated!");
+  }
+  console.log("refresh");
+  verifyRefreshToken(refreshToken)
+    .then((token) => {
+      jwt.verify(refreshToken, tokenSecret, (err: any, user: any) => {
+        err && console.log(err);
+
+        sql = `DELETE FROM refreshToken WHERE refreshToken="${refreshToken}"`;
+        db.run(sql, [], (err: any) => {
+          if (err) return res.json({ status: 300, success: false, error: err });
+        });
+
+        const newAccesToken = generateToken(user, "15m");
+        const newRefreshToken = generateToken(user, "2h");
+
+        sql = "INSERT INTO refreshToken(refreshToken) VALUES (?)";
+        db.run(sql, [newRefreshToken], (err: any) => {
+          if (err) return res.json({ status: 300, success: false, error: err });
+        });
+
+        res.status(200).json({
+          accessToken: newAccesToken,
+          refreshToken: newRefreshToken,
+        });
+      });
+    })
+    .catch((err) => {
+      return res.status(403).json("Refresh token is not valid!");
+    });
+});
+
+async function verifyRefreshToken(token: string) {
+  sql = "SELECT * FROM refreshToken WHERE refreshToken=?";
+
+  return new Promise((resolve, reject) => {
+    db.all(sql, [token], (err: any, rows: string | any[]) => {
+      if (err) {
+        reject(err);
+      } else {
+        if (rows.length > 0) {
+          resolve(rows);
+        } else {
+          resolve(null);
+        }
+      }
+    });
+  });
+}
+
+async function verifyUser(login: string, password: string) {
+  let user: any = null;
+  sql = "SELECT * FROM user WHERE login=? AND password =?";
+
+  return new Promise((resolve, reject) => {
+    db.all(sql, [login, password], (err: any, rows: string | any[]) => {
+      if (err) {
+        reject(err); // Jeśli wystąpił błąd, odrzuć obietnicę
+      } else {
+        if (rows.length > 0) {
+          user = rows[0];
+          console.log("Znaleziono użytkownika:", user);
+          resolve(user); // Rozwiąż obietnicę z użytkownikiem
+        } else {
+          console.log("Użytkownik nie znaleziony");
+          resolve(null); // Rozwiąż obietnicę z wartością null, jeśli użytkownik nie został znaleziony
+        }
+      }
+    });
+  });
+}
 function generateToken(user: any, exp: string) {
   const token = jwt.sign({ id: user.id, login: user.login }, tokenSecret, {
     expiresIn: exp,
@@ -460,7 +585,6 @@ function generateToken(user: any, exp: string) {
 
   return token;
 }
-
 function verifyToken(req: any, res: any, next: any) {
   const authHeader = req.headers["authorization"];
   const token = authHeader?.split(" ")[1];
@@ -476,72 +600,3 @@ function verifyToken(req: any, res: any, next: any) {
     next();
   });
 }
-
-app.post("/login", (req, res) => {
-  const { login, password } = req.body;
-
-  let user = verifyUser(login, password);
-
-  //let user = verifyUser(login, password);
-  console.log(verifyUser(login, password));
-  if (user != null) {
-    let accessToken = generateToken(user, "15m");
-    let refreshToken = generateToken(user, "2h");
-    sql = "INSERT INTO refreshToken(refreshToken) VALUES (?)";
-    db.run(sql, [refreshToken]);
-    res.json({
-      login: login,
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-    });
-  } else {
-    //console.log(user);
-    res.status(400).json("Username or password incorrect!");
-  }
-});
-
-async function verifyUser(login: string, password: string) {
-  let user: any = null;
-  sql = "SELECT * FROM user WHERE login=? AND password =?";
-  await db.all(sql, [login, password], (err: any, rows: string | any[]) => {
-    if (err) return;
-    if (rows.length < 1) return;
-    user = rows[0];
-    //console.log(user);
-    return user;
-  });
-  console.log(user);
-  return user;
-}
-
-app.post("/logout", verifyToken, (req, res) => {
-  const refreshToken = req.body.token;
-  console.log(refreshToken);
-  refreshTokens = refreshTokens.filter((token) => token !== refreshToken);
-  res.status(200).json("You logged out successfully!");
-});
-
-app.post("/refreshToken", (req, res) => {
-  const refreshToken = req.body.token;
-  if (!refreshToken) {
-    return res.status(401).json("You are not authenticated!");
-  }
-  if (!refreshTokens.includes(refreshToken)) {
-    return res.status(403).json("Refresh token is not valid!");
-  }
-
-  jwt.verify(refreshToken, tokenSecret, (err: any, user: any) => {
-    err && console.log(err);
-    refreshTokens = refreshTokens.filter((token) => token !== refreshToken);
-
-    const newAccesToken = generateToken(user, "15m");
-    const newRefreshToken = generateToken(user, "2h");
-
-    refreshTokens.push(newRefreshToken);
-
-    res.status(200).json({
-      accessToken: newAccesToken,
-      refreshToken: newRefreshToken,
-    });
-  });
-});

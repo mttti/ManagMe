@@ -21,7 +21,7 @@ export default function Stories({ projectGuId }: { projectGuId: string }) {
       }
     }
     getStories();
-  }, [isModalHidden, projectGuId, allStories]);
+  }, [isModalHidden, projectGuId]);
 
   function toggleModal() {
     setIsModalHidden((prevState) => !prevState);
