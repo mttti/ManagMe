@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { UserApi } from "../api";
-import { redirect, useNavigate } from "react-router-dom";
+import { json, useNavigate } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
 export default function SignIn({}: {}) {
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
@@ -12,7 +14,7 @@ export default function SignIn({}: {}) {
       api.login(login, password).then((res) => {
         if (res.success) {
           navigate("/all-projects");
-
+          console.log(res);
           //console.log(JSON.parse(localStorage.getItem("loggedUser")!));
           localStorage.setItem("loggedUser", JSON.stringify(res));
         } else {
@@ -48,6 +50,28 @@ export default function SignIn({}: {}) {
       >
         Login
       </button>
+
+      <GoogleLogin
+        onSuccess={(res) => {
+          let credential = jwtDecode(res.credential!);
+          navigate("/all-projects");
+          api
+            .googleLogin(credential.id, credential.email, credential.name)
+            .then((res) => {
+              console.log(res);
+              const data = {
+                userName: credential.name,
+                login: res.login,
+                accessToken: res.accessToken,
+                refreshToken: res.refreshToken,
+              };
+              localStorage.setItem("loggedUser", JSON.stringify(data));
+            });
+        }}
+        onError={() => {
+          console.log("Login failed");
+        }}
+      ></GoogleLogin>
     </div>
   );
 }

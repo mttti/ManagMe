@@ -293,6 +293,17 @@ export class UserApi {
     return response.data;
   }
 
+  async googleLogin(id: string, email: string, name: string) {
+    const data = {
+      id: id,
+      email: email,
+      name: name,
+    };
+    const response = await axios.post("/googleLogin", data);
+
+    return response.data;
+  }
+
   async logout(token: string, refreshToken: string) {
     const response = await axios.post(
       "/logout",

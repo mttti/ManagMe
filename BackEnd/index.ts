@@ -482,6 +482,26 @@ app.post("/login", async (req, res) => {
     });
 });
 
+app.post("/googleLogin", async (req, res) => {
+  const { id, email, name } = req.body;
+  const user = {
+    id: id,
+    login: email,
+  };
+  let accessToken = generateToken(user, "15m");
+  let refreshToken = generateToken(user, "2h");
+  sql = "INSERT INTO refreshToken(refreshToken) VALUES (?)";
+  db.run(sql, [refreshToken]);
+
+  res.json({
+    success: true,
+    login: user.login,
+    userName: name,
+    accessToken: accessToken,
+    refreshToken: refreshToken,
+  });
+});
+
 app.post("/logout", verifyToken, (req, res) => {
   const refreshToken = req.body.token;
   console.log(refreshToken);
