@@ -292,11 +292,11 @@ app.post("/task", (req, res) => {
       additionDate,
       startDate,
       finishDate,
-      userId,
+      UserId,
     } = req.body;
     console.log(req.body);
     sql =
-      "INSERT INTO task(GUID, name, description,priority,storyId,expectedTime,status,additionDate,startDate,finishDate,userId) VALUES(?,?,?,?,?,?,?,?,?,?,?)";
+      "INSERT INTO task(GUID, name, description,priority,storyId,expectedTime,status,additionDate,startDate,finishDate,UserId) VALUES(?,?,?,?,?,?,?,?,?,?,?)";
     db.run(
       sql,
       [
@@ -310,7 +310,7 @@ app.post("/task", (req, res) => {
         additionDate,
         startDate,
         finishDate,
-        userId,
+        UserId,
       ],
       (err: any) => {
         if (err) return res.json({ status: 300, success: false, error: err });
@@ -378,9 +378,9 @@ app.put("/task", (req, res) => {
     additionDate,
     startDate,
     finishDate,
-    userId,
+    UserId,
   } = req.body;
-  sql = `UPDATE task SET name=?, description=?, priority=?, storyId=?, expectedTime=?, status=?, additionDate=?,startDate=?,finishDate=?,userId=? WHERE GUID=?`;
+  sql = `UPDATE task SET name=?, description=?, priority=?, storyId=?, expectedTime=?, status=?, additionDate=?,startDate=?,finishDate=?,UserId=? WHERE GUID=?`;
   try {
     db.run(
       sql,
@@ -394,7 +394,7 @@ app.put("/task", (req, res) => {
         additionDate,
         startDate,
         finishDate,
-        userId,
+        UserId,
         GUID,
       ],
       (err: any) => {
@@ -584,15 +584,15 @@ async function verifyUser(login: string, password: string) {
   return new Promise((resolve, reject) => {
     db.all(sql, [login, password], (err: any, rows: string | any[]) => {
       if (err) {
-        reject(err); // Jeśli wystąpił błąd, odrzuć obietnicę
+        reject(err);
       } else {
         if (rows.length > 0) {
           user = rows[0];
           console.log("Znaleziono użytkownika:", user);
-          resolve(user); // Rozwiąż obietnicę z użytkownikiem
+          resolve(user);
         } else {
           console.log("Użytkownik nie znaleziony");
-          resolve(null); // Rozwiąż obietnicę z wartością null, jeśli użytkownik nie został znaleziony
+          resolve(null);
         }
       }
     });

@@ -34,6 +34,7 @@ export default function Tasks() {
     setIsModalHidden(false);
     try {
       taskApi.addTask(task);
+      console.log(task);
       setAllTasks((prevState) => [task, ...prevState]);
       toggleModal();
     } catch (error) {}
@@ -52,16 +53,20 @@ export default function Tasks() {
   }
 
   function assignUser(task: TaskType, user: UserType) {
-    task.status = "DOING";
-    task.startDate = new Date();
-    task.UserId = user.GUID;
+    const updatedTask = { ...task };
+    updatedTask.status = "DOING";
+    updatedTask.startDate = new Date();
+
+    updatedTask.UserId = user.GUID;
     try {
-      taskApi.updateTask(task);
+      taskApi.updateTask(updatedTask);
       let taskIndex = allTasks.findIndex((t) => t.GUID === task.GUID);
       let tasks = [...allTasks];
       tasks[taskIndex] = task;
       setAllTasks(tasks);
-    } catch (error) {}
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   function deleteTask(id: string) {
@@ -100,69 +105,73 @@ export default function Tasks() {
           task={editedTask}
         ></TaskModal>
       )}
-      <div>
-        <button
-          className=" bg-purple-400 w-fit p-3 rounded-xl flex cursor-pointer hover:bg-purple-500"
-          onClick={toggleModal}
-        >
-          Add a new task
-        </button>
-      </div>
-
-      {hasTasks ? (
-        <div className="flex justify-evenly mt-10">
-          <div className="w-1/4 bg-purple-700 p-5">
-            <h1 className="text-center text-2xl p-4">TODO</h1>
-            {allTasks
-              .filter((t) => t.status === "TODO")
-              .map((task) => (
-                <Task
-                  task={task}
-                  key={task.GUID}
-                  projectName={projectName}
-                  deleteTask={deleteTask}
-                  editTask={editTaskToggle}
-                  markAsDone={markAsDone}
-                  assignUser={assignUser}
-                ></Task>
-              ))}
-          </div>
-          <div className="w-1/4 bg-purple-700 p-5">
-            <h1 className="text-center text-2xl p-4">DOING</h1>
-            {allTasks
-              .filter((t) => t.status === "DOING")
-              .map((task) => (
-                <Task
-                  task={task}
-                  key={task.GUID}
-                  projectName={projectName}
-                  deleteTask={deleteTask}
-                  editTask={editTaskToggle}
-                  markAsDone={markAsDone}
-                  assignUser={assignUser}
-                ></Task>
-              ))}
-          </div>
-          <div className="w-1/4 bg-purple-700 p-5">
-            <h1 className="text-center text-2xl p-4">DONE</h1>
-            {allTasks
-              .filter((t) => t.status === "DONE")
-              .map((task) => (
-                <Task
-                  task={task}
-                  key={task.GUID}
-                  projectName={projectName}
-                  deleteTask={deleteTask}
-                  editTask={editTaskToggle}
-                  markAsDone={markAsDone}
-                  assignUser={assignUser}
-                ></Task>
-              ))}
-          </div>
+      <div className="flex justify-center flex-col items-center">
+        <div className="flex justify-center">
+          <button
+            className=" text-white bg-cyan-800 dark:bg-zinc-800 w-fit p-3 my-5 rounded-xl flex cursor-pointer hover:bg-cyan-700 dark:hover:bg-zinc-700"
+            onClick={toggleModal}
+          >
+            Add a new task
+          </button>
         </div>
-      ) : (
-        <h1>There are no tasks yet</h1>
-      )}
+
+        {hasTasks ? (
+          <div className="flex justify-evenly mt-10 w-full">
+            <div className="w-1/4 bg-cyan-800 dark:bg-zinc-800   p-5">
+              <h1 className="text-center text-3xl p-4 text-white">TODO</h1>
+              {allTasks
+                .filter((t) => t.status === "TODO")
+                .map((task) => (
+                  <Task
+                    task={task}
+                    key={task.GUID}
+                    projectName={projectName}
+                    deleteTask={deleteTask}
+                    editTask={editTaskToggle}
+                    markAsDone={markAsDone}
+                    assignUser={assignUser}
+                  ></Task>
+                ))}
+            </div>
+            <div className="w-1/4 bg-cyan-800 dark:bg-zinc-800   p-5">
+              <h1 className="text-center text-3xl p-4 text-white">DOING</h1>
+              {allTasks
+                .filter((t) => t.status === "DOING")
+                .map((task) => (
+                  <Task
+                    task={task}
+                    key={task.GUID}
+                    projectName={projectName}
+                    deleteTask={deleteTask}
+                    editTask={editTaskToggle}
+                    markAsDone={markAsDone}
+                    assignUser={assignUser}
+                  ></Task>
+                ))}
+            </div>
+            <div className="w-1/4 bg-cyan-800 dark:bg-zinc-800   p-5">
+              <h1 className="text-center text-3xl p-4 text-white">DONE</h1>
+              {allTasks
+                .filter((t) => t.status === "DONE")
+                .map((task) => (
+                  <Task
+                    task={task}
+                    key={task.GUID}
+                    projectName={projectName}
+                    deleteTask={deleteTask}
+                    editTask={editTaskToggle}
+                    markAsDone={markAsDone}
+                    assignUser={assignUser}
+                  ></Task>
+                ))}
+            </div>
+          </div>
+        ) : (
+          <div className="text-white bg-cyan-800 dark:bg-zinc-800 p-4 w-1/3 text-center border-2 ">
+            There are no stories yet
+          </div>
+        )}
+      </div>
     </>
   );
 }

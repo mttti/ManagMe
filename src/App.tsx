@@ -19,13 +19,6 @@ function App() {
     }
   }, []);
 
-  let loggedUsers;
-  async function getLoggedUser() {
-    loggedUsers = await api.getAllUsers();
-  }
-  getLoggedUser();
-  // const [pinnedProject, setPinnedProject] = useState("11");
-
   return (
     <>
       <BrowserRouter>

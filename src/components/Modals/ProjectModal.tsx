@@ -49,7 +49,7 @@ export default function ProjectModal({
   }
 
   return (
-    <div className="fixed w-full h-full -mt-40">
+    <div className="fixed w-full h-full -mt-14">
       {!isModalHidden && (
         <>
           <div
@@ -57,7 +57,7 @@ export default function ProjectModal({
             className=" bg-black opacity-60 w-full h-full absolute"
           ></div>
           <div className="flex items-center justify-center w-full h-full">
-            <div className="flex w-1/3 h-60 rounded-md p-5 bg-purple-300 relative justify-evenly flex-col ">
+            <div className="flex w-1/3 h-60 rounded-md p-5 bg-cyan-700 dark:bg-zinc-700 relative justify-evenly flex-col ">
               <input
                 className="p-1"
                 type="text"
@@ -75,13 +75,13 @@ export default function ProjectModal({
               <div className="flex justify-evenly">
                 <button
                   onClick={projectData ? editProjectHandler : addProjectHandler}
-                  className="bg-purple-400 w-fit p-3 rounded-xl flex cursor-pointer hover:bg-purple-500"
+                  className="text-white bg-cyan-800 dark:bg-zinc-800 w-fit p-3 rounded-xl flex cursor-pointer hover:bg-cyan-900 dark:hover:bg-zinc-900"
                 >
                   {projectData ? "Save" : "Add"}
                 </button>
                 <button
                   onClick={hide}
-                  className="bg-purple-400 w-fit p-3 rounded-xl flex cursor-pointer hover:bg-purple-500"
+                  className="text-white bg-cyan-800 dark:bg-zinc-800 w-fit p-3 rounded-xl flex cursor-pointer hover:bg-cyan-900 dark:hover:bg-zinc-900"
                 >
                   Cancel
                 </button>

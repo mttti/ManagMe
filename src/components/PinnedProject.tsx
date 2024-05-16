@@ -20,13 +20,14 @@ export default function PinnedProject() {
     getPinnedProject();
   }, []);
   return (
-    <>
+    <div className="p-5">
       {hasPinnedProject ? (
         <>
-          <div className="w-full bg-purple-700 border-2 border-white p-10">
-            <p>Project name: {pinnedProject!.name}</p>
-            <p>Project description: {pinnedProject!.description}</p>
-            <p>Project id: {pinnedProject!.GUID}</p>
+          <div className="w-full bg-cyan-800 dark:bg-zinc-800  border-2 border-white p-10 text-white">
+            <p className="text-2xl mb-3">Project name: {pinnedProject!.name}</p>
+            <p className="text-2xl">
+              Project description: {pinnedProject!.description}
+            </p>
           </div>
 
           <Stories projectGuId={pinnedProject!.GUID}></Stories>
@@ -34,6 +35,6 @@ export default function PinnedProject() {
       ) : (
         <h1>There is no pinned project</h1>
       )}
-    </>
+    </div>
   );
 }

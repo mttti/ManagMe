@@ -74,10 +74,10 @@ export default function Projects() {
           editProject={editProject}
         />
       )}
-      <div className="flex flex-col items-center ">
+      <div className="flex flex-col items-center my-5 px-5 ">
         <div
           onClick={toggleModal}
-          className="bg-purple-400 w-fit p-3 rounded-xl flex cursor-pointer hover:bg-purple-500"
+          className="text-white bg-cyan-800 dark:bg-zinc-800 w-fit p-3 mb-5 rounded-xl flex cursor-pointer hover:bg-cyan-700 dark:hover:bg-zinc-700"
         >
           Add a new project
         </div>
@@ -92,7 +92,9 @@ export default function Projects() {
             />
           ))
         ) : (
-          <div>There are no projects yet</div>
+          <div className="text-black dark:text-white mt-10 text-3xl">
+            There are no projects yet...
+          </div>
         )}
       </div>
     </>

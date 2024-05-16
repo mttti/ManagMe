@@ -69,65 +69,67 @@ export default function Stories({ projectGuId }: { projectGuId: string }) {
           editStory={editStory}
         />
       )}
-      <button
-        onClick={toggleModal}
-        className=" bg-purple-400 w-fit p-3 rounded-xl flex cursor-pointer hover:bg-purple-500"
-      >
-        Add new story
-      </button>
-      {hasStories ? (
-        <div className="flex justify-evenly mt-10">
-          <div className="bg-purple-400 w-1/4 p-3">
-            <h1 className="text-center text-2xl">Planned stories</h1>
+      <div className="flex flex-col items-center">
+        <button
+          onClick={toggleModal}
+          className=" text-white bg-cyan-800 dark:bg-zinc-800 w-fit p-3 my-5 rounded-xl flex cursor-pointer hover:bg-cyan-700 dark:hover:bg-zinc-700"
+        >
+          Add new story
+        </button>
+        {hasStories ? (
+          <div className="flex justify-evenly mt-10 w-full">
+            <div className="bg-cyan-800 dark:bg-zinc-800  border-2 border-white text-white w-1/4 p-3">
+              <h1 className="text-center text-2xl">Planned stories</h1>
 
-            {hasStories &&
-              allStories
-                .filter((s) => s.status === "TODO")
-                .map((story) => (
-                  <Story
-                    story={story}
-                    key={story.GUID}
-                    deleteStory={deleteStory}
-                    editStory={editStoryToggle}
-                  ></Story>
-                ))}
-          </div>
-          <div className="bg-purple-400 w-1/4 p-3 flex flex-col">
-            <h1 className="text-center text-2xl">Stories in progress</h1>
+              {hasStories &&
+                allStories
+                  .filter((s) => s.status === "TODO")
+                  .map((story) => (
+                    <Story
+                      story={story}
+                      key={story.GUID}
+                      deleteStory={deleteStory}
+                      editStory={editStoryToggle}
+                    ></Story>
+                  ))}
+            </div>
+            <div className="bg-cyan-800 dark:bg-zinc-800  border-2 border-white text-white w-1/4 p-3">
+              <h1 className="text-center text-2xl">Stories in progress</h1>
 
-            {hasStories &&
-              allStories
-                .filter((s) => s.status === "DOING")
-                .map((story) => (
-                  <Story
-                    story={story}
-                    key={story.GUID}
-                    deleteStory={deleteStory}
-                    editStory={editStoryToggle}
-                  ></Story>
-                ))}
-          </div>
-          <div className="bg-purple-400 w-1/4 p-3">
-            <h1 className="text-center text-2xl">Finished stories</h1>
+              {hasStories &&
+                allStories
+                  .filter((s) => s.status === "DOING")
+                  .map((story) => (
+                    <Story
+                      story={story}
+                      key={story.GUID}
+                      deleteStory={deleteStory}
+                      editStory={editStoryToggle}
+                    ></Story>
+                  ))}
+            </div>
+            <div className="bg-cyan-800 dark:bg-zinc-800  border-2 border-white text-white w-1/4 p-3">
+              <h1 className="text-center text-2xl">Finished stories</h1>
 
-            {hasStories &&
-              allStories
-                .filter((s) => s.status === "DONE")
-                .map((story) => (
-                  <Story
-                    story={story}
-                    key={story.GUID}
-                    deleteStory={deleteStory}
-                    editStory={editStoryToggle}
-                  ></Story>
-                ))}
+              {hasStories &&
+                allStories
+                  .filter((s) => s.status === "DONE")
+                  .map((story) => (
+                    <Story
+                      story={story}
+                      key={story.GUID}
+                      deleteStory={deleteStory}
+                      editStory={editStoryToggle}
+                    ></Story>
+                  ))}
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="bg-purple-400 p-4 w-1/3 text-center">
-          There are no stories yet
-        </div>
-      )}
+        ) : (
+          <div className="text-white bg-cyan-800 dark:bg-zinc-800 p-4 w-1/3 text-center border-2">
+            There are no stories yet
+          </div>
+        )}
+      </div>
     </>
   );
 }

@@ -11,25 +11,29 @@ export default function Story({
   deleteStory: (id: string) => void;
 }) {
   return (
-    <div className="bg-purple-300 mt-5 p-2">
-      <p>Id: {story.GUID}</p>
-      <p>Name: {story.name}</p>
-      <p>Description: {story.description}</p>
-      <p>Priority: {story.priority}</p>
-      <p>Project Id: {story.projectId}</p>
-      <p>Date: {story.date.toString()}</p>
-      <p>Owner Id: {story.ownerId}</p>
-      <button className="mr-5 cursor-pointer" onClick={() => editStory(story)}>
-        Edit
-      </button>
-      <button
-        className="cursor-pointer"
-        onClick={() => deleteStory(story.GUID)}
-      >
-        Delete
-      </button>
-      <br />
-      <Link to={`/pinned-project/${story.GUID}/tasks`}>Tasks</Link>
+    <div className="bg-cyan-800 dark:bg-zinc-800  border-2 border-white text-white mt-5 p-2">
+      <p className="text-xl">Name: {story.name}</p>
+      <p className="text-xl">Description: {story.description}</p>
+      <p className="text-xl">Priority: {story.priority}</p>
+      <p className="text-xl">Date: {new Date(story.date).toDateString()}</p>
+      <p className="text-xl">Owner Id: {story.ownerId}</p>
+      <div className="flex justify-around mt-1">
+        <button
+          className="cursor-pointer bg-cyan-600 dark:bg-zinc-600 px-5 py-1 rounded-md hover:bg-cyan-700 dark:hover:bg-zinc-700"
+          onClick={() => editStory(story)}
+        >
+          Edit
+        </button>
+        <button
+          className="cursor-pointer bg-cyan-600 dark:bg-zinc-600 px-5 py-1 rounded-md hover:bg-cyan-700 dark:hover:bg-zinc-700"
+          onClick={() => deleteStory(story.GUID)}
+        >
+          Delete
+        </button>
+        <button className="cursor-pointer bg-cyan-600 dark:bg-zinc-600 px-5 py-1 rounded-md hover:bg-cyan-700 dark:hover:bg-zinc-700">
+          <Link to={`/pinned-project/${story.GUID}/tasks`}>Tasks</Link>
+        </button>
+      </div>
     </div>
   );
 }

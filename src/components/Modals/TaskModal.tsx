@@ -53,6 +53,7 @@ export default function TaskModal({
         expectedTime: taskExecTime,
         status: taskStatus,
         additionDate: new Date(),
+        UserId: undefined,
       };
       addTask(newTask);
     }
@@ -70,14 +71,14 @@ export default function TaskModal({
         additionDate: task?.additionDate!,
         startDate: task?.startDate,
         finishDate: task?.finishDate,
-        User: task?.User,
+        UserId: task?.UserId,
       };
       editTask(editedTask);
     }
   }
 
   return (
-    <div className="fixed w-full h-full -mt-40">
+    <div className="fixed w-full h-full -mt-14">
       {!isModalHidden && (
         <>
           <div
@@ -85,7 +86,7 @@ export default function TaskModal({
             className=" bg-black opacity-60 w-full h-full absolute"
           ></div>
           <div className="flex items-center justify-center w-full h-full">
-            <div className="flex w-1/3 h-fit rounded-md p-5 bg-purple-300 relative justify-evenly flex-col ">
+            <div className="flex w-1/3 h-120 rounded-md p-5 bg-cyan-700 dark:bg-zinc-700 relative justify-evenly flex-col ">
               <input
                 type="text"
                 className="p-1 mt-5"
@@ -107,7 +108,7 @@ export default function TaskModal({
                 value={taskExecTime}
                 onChange={(e) => setTaskExecTime(parseInt(e.target.value))}
               />
-              <p className=" mt-5">Priority:</p>
+              <p className=" mt-5 text-white">Priority:</p>
               <select
                 name="priority"
                 onChange={(e) =>
@@ -120,7 +121,7 @@ export default function TaskModal({
                 <option value="MEDIUM">MEDIUM</option>
                 <option value="HIGH">HIGH</option>
               </select>
-              <p>Status:</p>
+              <p className="text-white">Status:</p>
               <select
                 name="priority"
                 onChange={(e) =>
@@ -136,13 +137,13 @@ export default function TaskModal({
               <div className="flex justify-evenly mt-5">
                 <button
                   onClick={task ? editTaskHandler : addTaskHandler}
-                  className="bg-purple-400 w-fit p-3 rounded-xl flex cursor-pointer hover:bg-purple-500"
+                  className="text-white bg-cyan-800 dark:bg-zinc-800 w-fit p-3 rounded-xl flex cursor-pointer hover:bg-cyan-900 dark:hover:bg-zinc-900"
                 >
                   {task ? "Save" : "Add"}
                 </button>
                 <button
                   onClick={hide}
-                  className="bg-purple-400 w-fit p-3 rounded-xl flex cursor-pointer hover:bg-purple-500"
+                  className="text-white bg-cyan-800 dark:bg-zinc-800 w-fit p-3 rounded-xl flex cursor-pointer hover:bg-cyan-900 dark:hover:bg-zinc-900"
                 >
                   Cancel
                 </button>

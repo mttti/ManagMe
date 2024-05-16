@@ -9,5 +9,5 @@ export type TaskType = {
   additionDate: Date;
   startDate?: Date;
   finishDate?: Date;
-  UserId?: string;
+  UserId: string | undefined;
 };
