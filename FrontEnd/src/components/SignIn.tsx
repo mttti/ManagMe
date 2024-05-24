@@ -4,10 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import { useLogin } from "../hooks/useLogin";
+import { useAuthContext } from "../hooks/useAuthContext";
 export default function SignIn({}: {}) {
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const api = new UserApi();
+  const { dispatch } = useAuthContext();
   const { loginUser, error, isLoading } = useLogin();
   let navigate = useNavigate();
 
@@ -50,18 +52,18 @@ export default function SignIn({}: {}) {
           onSuccess={(res) => {
             let credential: { id: string; email: string; name: string } =
               jwtDecode(res.credential!);
-            navigate("/all-projects");
+            navigate("/");
             api
               .googleLogin(credential.id, credential.email, credential.name)
               .then((res) => {
-                console.log(res);
                 const data = {
                   userName: credential.name,
                   login: res.login,
                   accessToken: res.accessToken,
                   refreshToken: res.refreshToken,
                 };
-                localStorage.setItem("loggedUser", JSON.stringify(data));
+                localStorage.setItem("user", JSON.stringify(data));
+                dispatch({ type: "LOGIN", payload: data });
               });
           }}
           onError={() => {
