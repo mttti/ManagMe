@@ -1,6 +1,7 @@
 import express from "express";
 import bodyParser from "body-parser";
 import jwt from "jsonwebtoken";
+import { jwtDecode } from "jwt-decode";
 
 const cors = require("cors");
 let sql: string;
@@ -10,15 +11,57 @@ const app = express();
 app.use(jsonParser);
 app.use(cors());
 const PORT = 3000;
+const http = require("http").Server(app);
+
+const socketIO = require("socket.io")(http, {
+  cors: {
+    origin: "http://localhost:5173",
+  },
+});
+
+socketIO.on("connection", (socket: any) => {
+  let notifications: any[] = [];
+
+  socket.on("getNotifications", (data: any) => {
+    sql = `SELECT * FROM notification WHERE userId="${data.userId}"`;
+    db.all(sql, [], (err: any, rows: any[]) => {
+      if (err) notifications = [];
+      else if (rows.length < 1) return (notifications = []);
+      else notifications = rows;
+      socket.emit("userNotifications", notifications);
+      return;
+    });
+    socket.emit("userNotifications", notifications);
+  });
+
+  socket.on("addNotification", (data: any) => {
+    sql =
+      "INSERT INTO notification(title, date, priority,read,userId,GUID) VALUES(?,?,?,?,?,?)";
+    const { title, date, priority, read, userId, GUID } = data;
+    db.run(sql, [title, date, priority, read, userId, GUID]);
+    sql = `SELECT * FROM notification WHERE userId="${data.userId}"`;
+    db.all(sql, [], (err: any, rows: any[]) => {
+      if (err) notifications = [];
+      else if (rows.length < 1) return (notifications = []);
+      else notifications = rows;
+      socket.emit("userNotifications", notifications);
+      return;
+    });
+    socket.emit("userNotifications", notifications);
+  });
+
+  socket.on("disconnect", () => {});
+});
 
 app.listen(PORT, () => {
   console.log("Server port: ", PORT);
 });
+http.listen(4001);
 
 const sqlite3 = require("sqlite3").verbose();
 
 const db = new sqlite3.Database(
-  "./menagme.db",
+  "./managme.db",
   sqlite3.OPEN_READWRITE,
   (err: any) => {
     if (err) return console.error(err);
@@ -27,22 +70,43 @@ const db = new sqlite3.Database(
 
 ///// PROJECT
 
-app.post("/project", (req, res) => {
-  try {
-    const { GUID, name, description } = req.body;
-    sql = "INSERT INTO project(GUID, name, description) VALUES(?,?,?)";
-    db.run(sql, [GUID, name, description], (err: any) => {
-      if (err) return res.json({ status: 300, success: false, error: err });
-      console.log("success");
-    });
-    return res.json({ status: 201, success: true });
-  } catch (error) {
-    return res.json({ status: 400, succes: false });
+app.post("/project", verifyToken, (req, res) => {
+  const userRole = getUserRole(req);
+  if (userRole === "ADMIN" || userRole === "DEVOPS") {
+    try {
+      const { GUID, name, description } = req.body;
+      sql = "INSERT INTO project(GUID, name, description) VALUES(?,?,?)";
+      db.run(sql, [GUID, name, description], (err: any) => {
+        if (err) return res.json({ status: 300, success: false, error: err });
+        console.log("success");
+      });
+      return res.json({ status: 201, success: true });
+    } catch (error) {
+      return res.json({ status: 400, succes: false });
+    }
+  } else {
+    return res.json({ status: 401, success: false });
   }
 });
 
-app.get("/project", (req, res) => {
-  sql = "SELECT * FROM project";
+app.get("/project", verifyToken, (req, res) => {
+  const userRole = getUserRole(req);
+  const userId = getUserId(req);
+  switch (userRole) {
+    case "ADMIN":
+      sql = "SELECT * FROM project";
+      break;
+    case "DEVOPS":
+      sql = "SELECT * FROM project";
+      break;
+    case "DEVELOPER":
+      sql = `SELECT * FROM project where GUID IN (SELECT projectId from userTask WHERE userId="${userId}")`;
+      break;
+
+    default:
+      break;
+  }
+
   try {
     db.all(sql, [], (err: any, rows: string | any[]) => {
       if (err) return res.json({ status: 300, success: false, error: err });
@@ -55,7 +119,7 @@ app.get("/project", (req, res) => {
   }
 });
 
-app.get("/project/:id", (req, res) => {
+app.get("/project/:id", verifyToken, (req, res) => {
   const id = req.params.id;
   sql = `SELECT * FROM project WHERE GUID="${id}"`;
 
@@ -71,59 +135,66 @@ app.get("/project/:id", (req, res) => {
   }
 });
 
-app.delete("/project/:id", (req, res) => {
-  const id = req.params.id;
-  sql = `DELETE FROM project WHERE GUID="${id}"`;
-  try {
-    db.run(sql, [], (err: any) => {
-      if (err) return res.json({ status: 300, success: false, error: err });
-    });
-    return res.json({ status: 200, success: true });
-  } catch (error) {
-    return res.json({ status: 400, succes: false });
+app.delete("/project/:id", verifyToken, (req, res) => {
+  const userRole = getUserRole(req);
+  if (userRole === "ADMIN" || userRole === "DEVOPS") {
+    const id = req.params.id;
+    sql = `DELETE FROM project WHERE GUID="${id}"`;
+    try {
+      db.run(sql, [], (err: any) => {
+        if (err) return res.json({ status: 300, success: false, error: err });
+      });
+      return res.json({ status: 200, success: true });
+    } catch (error) {
+      return res.json({ status: 400, succes: false });
+    }
+  } else {
+    return res.json({ status: 401, success: false });
   }
 });
 
-app.put("/project", (req, res) => {
-  const { GUID, name, description } = req.body;
-  sql = `UPDATE project SET name=?, description=? WHERE GUID=?`;
-  try {
-    db.run(sql, [name, description, GUID], (err: any) => {
-      if (err) return res.json({ status: 300, success: false, error: err });
-      console.log("success");
-    });
-    return res.json({ status: 201, success: true });
-  } catch (error) {
-    return res.json({ status: 400, succes: false });
+app.put("/project", verifyToken, (req, res) => {
+  const userRole = getUserRole(req);
+  if (userRole === "ADMIN" || userRole === "DEVOPS") {
+    const { GUID, name, description } = req.body;
+    sql = `UPDATE project SET name=?, description=? WHERE GUID=?`;
+    try {
+      db.run(sql, [name, description, GUID], (err: any) => {
+        if (err) return res.json({ status: 300, success: false, error: err });
+        console.log("success");
+      });
+      return res.json({ status: 201, success: true });
+    } catch (error) {
+      return res.json({ status: 400, succes: false });
+    }
+  } else {
+    return res.json({ status: 401, success: false });
   }
 });
 
 ///// PINNED PROJECT
 
-app.post("/pinnedProject", (req, res) => {
+app.post("/pinnedProject", verifyToken, (req, res) => {
+  const userId = getUserId(req);
   try {
     const { GUID, name, description } = req.body;
-    sql = "DELETE FROM pinnedProject";
-    db.run(sql, [], (delErr: any) => {
-      if (delErr) {
-        return res.json({ status: 300, success: false, error: delErr });
-      }
-      sql = "INSERT INTO pinnedProject(GUID, name, description) VALUES(?,?,?)";
-      db.run(sql, [GUID, name, description], (err: any) => {
-        if (err) return res.json({ status: 300, success: false, error: err });
-        console.log("success");
-      });
+    sql =
+      "INSERT OR REPLACE INTO pinnedProject(GUID, name, description,userId) VALUES(?,?,?,?)";
+    db.run(sql, [GUID, name, description, userId], (err: any) => {
+      if (err) return res.json({ status: 300, success: false, error: err });
     });
+
     return res.json({ status: 201, success: true });
   } catch (error) {
     return res.json({ status: 400, succes: false });
   }
 });
 
-app.get("/pinnedProject", (req, res) => {
-  sql = "SELECT * FROM pinnedProject";
+app.get("/pinnedProject", verifyToken, (req, res) => {
+  const userId = getUserId(req);
+  sql = "SELECT * FROM pinnedProject WHERE userId=?";
   try {
-    db.all(sql, [], (err: any, rows: string | any[]) => {
+    db.all(sql, [userId], (err: any, rows: string | any[]) => {
       if (err) return res.json({ status: 300, success: false, error: err });
       if (rows.length < 1)
         return res.json({ status: 204, success: false, message: "No match" });
@@ -134,64 +205,81 @@ app.get("/pinnedProject", (req, res) => {
   }
 });
 
-app.delete("/pinnedProject/:id", (req, res) => {
+app.delete("/pinnedProject/:id", verifyToken, (req, res) => {
   const id = req.params.id;
-  sql = `DELETE FROM pinnedProject WHERE GUID="${id}"`;
-  try {
-    db.run(sql, [], (err: any) => {
-      if (err) return res.json({ status: 300, success: false, error: err });
-    });
-    return res.json({ status: 200, success: true });
-  } catch (error) {
-    return res.json({ status: 400, succes: false });
+  const userRole = getUserRole(req);
+  if (userRole === "ADMIN" || userRole === "DEVOPS") {
+    sql = `DELETE FROM pinnedProject WHERE GUID="${id}"`;
+    try {
+      db.run(sql, [], (err: any) => {
+        if (err) return res.json({ status: 300, success: false, error: err });
+      });
+      return res.json({ status: 200, success: true });
+    } catch (error) {
+      return res.json({ status: 400, succes: false });
+    }
+  } else {
+    return res.json({ status: 401, success: false });
   }
 });
 
-app.put("/pinnedProject", (req, res) => {
-  const { GUID, name, description } = req.body;
-  sql = `UPDATE pinnedProject SET name=?, description=? WHERE GUID=?`;
-  try {
-    db.run(sql, [name, description, GUID], (err: any) => {
-      if (err) return res.json({ status: 300, success: false, error: err });
-      console.log("success");
-    });
-    return res.json({ status: 201, success: true });
-  } catch (error) {
-    return res.json({ status: 400, succes: false });
+app.put("/pinnedProject", verifyToken, (req, res) => {
+  const userRole = getUserRole(req);
+
+  if (userRole === "ADMIN" || userRole === "DEVOPS") {
+    const { GUID, name, description } = req.body;
+    sql = `UPDATE pinnedProject SET name=?, description=? WHERE GUID=?`;
+    try {
+      db.run(sql, [name, description, GUID], (err: any) => {
+        if (err) return res.json({ status: 300, success: false, error: err });
+        console.log("success");
+      });
+      return res.json({ status: 201, success: true });
+    } catch (error) {
+      return res.json({ status: 400, succes: false });
+    }
+  } else {
+    return res.json({ status: 401, success: false });
   }
 });
 
 ///// STORY
 
-app.post("/story", (req, res) => {
-  try {
-    const {
-      GUID,
-      name,
-      description,
-      priority,
-      projectId,
-      date,
-      status,
-      ownerId,
-    } = req.body;
-    sql =
-      "INSERT INTO story(GUID, name, description,priority,projectId,date,status,ownerId) VALUES(?,?,?,?,?,?,?,?)";
-    db.run(
-      sql,
-      [GUID, name, description, priority, projectId, date, status, ownerId],
-      (err: any) => {
-        if (err) return res.json({ status: 300, success: false, error: err });
-        console.log("success");
-      }
-    );
-    return res.json({ status: 201, success: true });
-  } catch (error) {
-    return res.json({ status: 400, succes: false });
+app.post("/story", verifyToken, (req, res) => {
+  const userRole = getUserRole(req);
+
+  if (userRole === "ADMIN" || userRole === "DEVOPS") {
+    try {
+      const {
+        GUID,
+        name,
+        description,
+        priority,
+        projectId,
+        date,
+        status,
+        ownerId,
+      } = req.body;
+      sql =
+        "INSERT INTO story(GUID, name, description,priority,projectId,date,status,ownerId) VALUES(?,?,?,?,?,?,?,?)";
+      db.run(
+        sql,
+        [GUID, name, description, priority, projectId, date, status, ownerId],
+        (err: any) => {
+          if (err) return res.json({ status: 300, success: false, error: err });
+          console.log("success");
+        }
+      );
+      return res.json({ status: 201, success: true });
+    } catch (error) {
+      return res.json({ status: 400, succes: false });
+    }
+  } else {
+    return res.json({ status: 401, success: false });
   }
 });
 
-app.get("/story", (req, res) => {
+app.get("/story", verifyToken, (req, res) => {
   sql = "SELECT * FROM story";
   try {
     db.all(sql, [], (err: any, rows: string | any[]) => {
@@ -205,7 +293,7 @@ app.get("/story", (req, res) => {
   }
 });
 
-app.get("/story/:id", (req, res) => {
+app.get("/story/:id", verifyToken, (req, res) => {
   const id = req.params.id;
   sql = `SELECT * FROM story WHERE GUID="${id}"`;
 
@@ -221,47 +309,59 @@ app.get("/story/:id", (req, res) => {
   }
 });
 
-app.delete("/story/:id", (req, res) => {
-  const id = req.params.id;
-  sql = `DELETE FROM story WHERE GUID="${id}"`;
-  try {
-    db.run(sql, [], (err: any) => {
-      if (err) return res.json({ status: 300, success: false, error: err });
-    });
-    return res.json({ status: 200, success: true });
-  } catch (error) {
-    return res.json({ status: 400, succes: false });
-  }
-});
+app.delete("/story/:id", verifyToken, (req, res) => {
+  const userRole = getUserRole(req);
 
-app.put("/story", (req, res) => {
-  const {
-    GUID,
-    name,
-    description,
-    priority,
-    projectId,
-    date,
-    status,
-    ownerId,
-  } = req.body;
-  sql = `UPDATE story SET name=?, description=?, priority=?, projectId=?, date=?, status=?, ownerId=? WHERE GUID=?`;
-  try {
-    db.run(
-      sql,
-      [name, description, priority, projectId, date, status, ownerId, GUID],
-      (err: any) => {
+  if (userRole === "ADMIN" || userRole === "DEVOPS") {
+    const id = req.params.id;
+    sql = `DELETE FROM story WHERE GUID="${id}"`;
+    try {
+      db.run(sql, [], (err: any) => {
         if (err) return res.json({ status: 300, success: false, error: err });
-        console.log("success");
-      }
-    );
-    return res.json({ status: 201, success: true });
-  } catch (error) {
-    return res.json({ status: 400, succes: false });
+      });
+      return res.json({ status: 200, success: true });
+    } catch (error) {
+      return res.json({ status: 400, succes: false });
+    }
+  } else {
+    return res.json({ status: 401, success: false });
   }
 });
 
-app.get("/story/projectId/:projectId", (req, res) => {
+app.put("/story", verifyToken, (req, res) => {
+  const userRole = getUserRole(req);
+
+  if (userRole === "ADMIN" || userRole === "DEVOPS") {
+    const {
+      GUID,
+      name,
+      description,
+      priority,
+      projectId,
+      date,
+      status,
+      ownerId,
+    } = req.body;
+    sql = `UPDATE story SET name=?, description=?, priority=?, projectId=?, date=?, status=?, ownerId=? WHERE GUID=?`;
+    try {
+      db.run(
+        sql,
+        [name, description, priority, projectId, date, status, ownerId, GUID],
+        (err: any) => {
+          if (err) return res.json({ status: 300, success: false, error: err });
+          console.log("success");
+        }
+      );
+      return res.json({ status: 201, success: true });
+    } catch (error) {
+      return res.json({ status: 400, succes: false });
+    }
+  } else {
+    return res.json({ status: 401, success: false });
+  }
+});
+
+app.get("/story/projectId/:projectId", verifyToken, (req, res) => {
   const projectId = req.params.projectId;
   sql = `SELECT * FROM story WHERE projectId="${projectId}"`;
 
@@ -279,27 +379,12 @@ app.get("/story/projectId/:projectId", (req, res) => {
 
 ///// TASK
 
-app.post("/task", (req, res) => {
-  try {
-    const {
-      GUID,
-      name,
-      description,
-      priority,
-      storyId,
-      expectedTime,
-      status,
-      additionDate,
-      startDate,
-      finishDate,
-      UserId,
-    } = req.body;
-    console.log(req.body);
-    sql =
-      "INSERT INTO task(GUID, name, description,priority,storyId,expectedTime,status,additionDate,startDate,finishDate,UserId) VALUES(?,?,?,?,?,?,?,?,?,?,?)";
-    db.run(
-      sql,
-      [
+app.post("/task", verifyToken, (req, res) => {
+  const userRole = getUserRole(req);
+
+  if (userRole === "ADMIN" || userRole === "DEVOPS") {
+    try {
+      const {
         GUID,
         name,
         description,
@@ -311,19 +396,39 @@ app.post("/task", (req, res) => {
         startDate,
         finishDate,
         UserId,
-      ],
-      (err: any) => {
-        if (err) return res.json({ status: 300, success: false, error: err });
-        console.log("success");
-      }
-    );
-    return res.json({ status: 201, success: true });
-  } catch (error) {
-    return res.json({ status: 400, succes: false });
+      } = req.body;
+      sql =
+        "INSERT INTO task(GUID, name, description,priority,storyId,expectedTime,status,additionDate,startDate,finishDate,UserId) VALUES(?,?,?,?,?,?,?,?,?,?,?)";
+      db.run(
+        sql,
+        [
+          GUID,
+          name,
+          description,
+          priority,
+          storyId,
+          expectedTime,
+          status,
+          additionDate,
+          startDate,
+          finishDate,
+          UserId,
+        ],
+        (err: any) => {
+          if (err) return res.json({ status: 300, success: false, error: err });
+          console.log("success");
+        }
+      );
+      return res.json({ status: 201, success: true });
+    } catch (error) {
+      return res.json({ status: 400, succes: false });
+    }
+  } else {
+    return res.json({ status: 401, success: false });
   }
 });
 
-app.get("/task", (req, res) => {
+app.get("/task", verifyToken, (req, res) => {
   sql = "SELECT * FROM task";
   try {
     db.all(sql, [], (err: any, rows: string | any[]) => {
@@ -337,7 +442,7 @@ app.get("/task", (req, res) => {
   }
 });
 
-app.get("/task/:id", (req, res) => {
+app.get("/task/:id", verifyToken, (req, res) => {
   const id = req.params.id;
   sql = `SELECT * FROM task WHERE GUID="${id}"`;
 
@@ -353,62 +458,74 @@ app.get("/task/:id", (req, res) => {
   }
 });
 
-app.delete("/task/:id", (req, res) => {
-  const id = req.params.id;
-  sql = `DELETE FROM task WHERE GUID="${id}"`;
-  try {
-    db.run(sql, [], (err: any) => {
-      if (err) return res.json({ status: 300, success: false, error: err });
-    });
-    return res.json({ status: 200, success: true });
-  } catch (error) {
-    return res.json({ status: 400, succes: false });
-  }
-});
+app.delete("/task/:id", verifyToken, (req, res) => {
+  const userRole = getUserRole(req);
 
-app.put("/task", (req, res) => {
-  const {
-    GUID,
-    name,
-    description,
-    priority,
-    storyId,
-    expectedTime,
-    status,
-    additionDate,
-    startDate,
-    finishDate,
-    UserId,
-  } = req.body;
-  sql = `UPDATE task SET name=?, description=?, priority=?, storyId=?, expectedTime=?, status=?, additionDate=?,startDate=?,finishDate=?,UserId=? WHERE GUID=?`;
-  try {
-    db.run(
-      sql,
-      [
-        name,
-        description,
-        priority,
-        storyId,
-        expectedTime,
-        status,
-        additionDate,
-        startDate,
-        finishDate,
-        UserId,
-        GUID,
-      ],
-      (err: any) => {
+  if (userRole === "ADMIN" || userRole === "DEVOPS") {
+    const id = req.params.id;
+    sql = `DELETE FROM task WHERE GUID="${id}"`;
+    try {
+      db.run(sql, [], (err: any) => {
         if (err) return res.json({ status: 300, success: false, error: err });
-        console.log("success");
-      }
-    );
-    return res.json({ status: 201, success: true });
-  } catch (error) {
-    return res.json({ status: 400, succes: false });
+      });
+      return res.json({ status: 200, success: true });
+    } catch (error) {
+      return res.json({ status: 400, succes: false });
+    }
+  } else {
+    return res.json({ status: 401, success: false });
   }
 });
 
-app.get("/task/storyId/:storyId", (req, res) => {
+app.put("/task", verifyToken, (req, res) => {
+  const userRole = getUserRole(req);
+
+  if (userRole === "ADMIN" || userRole === "DEVOPS") {
+    const {
+      GUID,
+      name,
+      description,
+      priority,
+      storyId,
+      expectedTime,
+      status,
+      additionDate,
+      startDate,
+      finishDate,
+      UserId,
+    } = req.body;
+    sql = `UPDATE task SET name=?, description=?, priority=?, storyId=?, expectedTime=?, status=?, additionDate=?,startDate=?,finishDate=?,UserId=? WHERE GUID=?`;
+    try {
+      db.run(
+        sql,
+        [
+          name,
+          description,
+          priority,
+          storyId,
+          expectedTime,
+          status,
+          additionDate,
+          startDate,
+          finishDate,
+          UserId,
+          GUID,
+        ],
+        (err: any) => {
+          if (err) return res.json({ status: 300, success: false, error: err });
+          console.log("success");
+        }
+      );
+      return res.json({ status: 201, success: true });
+    } catch (error) {
+      return res.json({ status: 400, succes: false });
+    }
+  } else {
+    return res.json({ status: 401, success: false });
+  }
+});
+
+app.get("/task/storyId/:storyId", verifyToken, (req, res) => {
   const storyId = req.params.storyId;
   sql = `SELECT * FROM task WHERE storyId="${storyId}"`;
 
@@ -424,9 +541,22 @@ app.get("/task/storyId/:storyId", (req, res) => {
   }
 });
 
+app.post("/assignTask", verifyToken, (req, res) => {
+  try {
+    const { taskId, projectId, userId } = req.body;
+    sql = "INSERT INTO userTask(taskId,projectId,userId) VALUES(?,?,?)";
+    db.run(sql, [taskId, projectId, userId], (err: any) => {
+      if (err) res.json({ status: 300, success: false, error: err });
+    });
+    return res.json({ status: 201, success: true });
+  } catch (error) {
+    return res.json({ status: 400, succes: false });
+  }
+});
+
 ///// USER
 
-app.get("/user", (req, res) => {
+app.get("/user", verifyToken, (req, res) => {
   sql = "SELECT * FROM user";
   try {
     db.all(sql, [], (err: any, rows: string | any[]) => {
@@ -440,7 +570,7 @@ app.get("/user", (req, res) => {
   }
 });
 
-app.post("/user", (req, res) => {
+app.post("/user", verifyToken, (req, res) => {
   try {
     const { GUID, name, surname, userRole, password, login } = req.body;
     sql =
@@ -450,7 +580,6 @@ app.post("/user", (req, res) => {
       [GUID, name, surname, userRole, password, login],
       (err: any) => {
         if (err) return res.json({ status: 300, success: false, error: err });
-        console.log("success");
       }
     );
     return res.json({ status: 201, success: true });
@@ -469,8 +598,6 @@ app.post("/login", async (req, res) => {
       db.run(sql, [refreshToken]);
       res.json({
         success: true,
-        login: user.login,
-        userName: user.name,
         accessToken: accessToken,
         refreshToken: refreshToken,
       });
@@ -487,6 +614,7 @@ app.post("/googleLogin", async (req, res) => {
   const user = {
     id: id,
     login: email,
+    name: name,
   };
   let accessToken = generateToken(user, "15m");
   let refreshToken = generateToken(user, "2h");
@@ -495,8 +623,6 @@ app.post("/googleLogin", async (req, res) => {
 
   res.json({
     success: true,
-    login: user.login,
-    userName: name,
     accessToken: accessToken,
     refreshToken: refreshToken,
   });
@@ -504,7 +630,6 @@ app.post("/googleLogin", async (req, res) => {
 
 app.post("/logout", verifyToken, (req, res) => {
   const refreshToken = req.body.token;
-  console.log(refreshToken);
   sql = `DELETE FROM refreshToken WHERE refreshToken="${refreshToken}"`;
   try {
     db.run(sql, [], (err: any) => {
@@ -529,7 +654,6 @@ app.post("/refreshToken", (req, res) => {
   if (!refreshToken) {
     return res.status(401).json("You are not authenticated!");
   }
-  console.log("refresh");
   verifyRefreshToken(refreshToken)
     .then((token) => {
       jwt.verify(refreshToken, tokenSecret, (err: any, user: any) => {
@@ -576,7 +700,6 @@ async function verifyRefreshToken(token: string) {
     });
   });
 }
-
 async function verifyUser(login: string, password: string) {
   let user: any = null;
   sql = "SELECT * FROM user WHERE login=? AND password =?";
@@ -588,10 +711,8 @@ async function verifyUser(login: string, password: string) {
       } else {
         if (rows.length > 0) {
           user = rows[0];
-          console.log("Znaleziono użytkownika:", user);
           resolve(user);
         } else {
-          console.log("Użytkownik nie znaleziony");
           resolve(null);
         }
       }
@@ -599,9 +720,18 @@ async function verifyUser(login: string, password: string) {
   });
 }
 function generateToken(user: any, exp: string) {
-  const token = jwt.sign({ id: user.id, login: user.login }, tokenSecret, {
-    expiresIn: exp,
-  });
+  const token = jwt.sign(
+    {
+      userId: user.GUID,
+      userName: user.name,
+      login: user.login,
+      userRole: user.userRole,
+    },
+    tokenSecret,
+    {
+      expiresIn: exp,
+    }
+  );
 
   return token;
 }
@@ -620,3 +750,38 @@ function verifyToken(req: any, res: any, next: any) {
     next();
   });
 }
+function getUserRole(req: any) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader?.split(" ")[1];
+  if (token) {
+    const decodedToken: { userRole: string } = jwtDecode(token);
+    const userRole = decodedToken.userRole;
+    return userRole;
+  }
+  return null;
+}
+function getUserId(req: any) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader?.split(" ")[1];
+  if (token) {
+    const decodedToken: { userId: string } = jwtDecode(token);
+    const userId = decodedToken.userId;
+    return userId;
+  }
+  return null;
+}
+
+/////NOTIFICATIONS
+
+app.post("/markAsRead", verifyToken, (req, res) => {
+  try {
+    const { GUID } = req.body;
+    sql = "UPDATE notification SET read=? WHERE GUID=?";
+    db.run(sql, [true, GUID], (err: any) => {
+      if (err) res.json({ status: 300, success: false, error: err });
+    });
+    return res.json({ status: 201, success: true });
+  } catch (error) {
+    return res.json({ status: 400, succes: false });
+  }
+});
