@@ -7,7 +7,7 @@ import { AuthContextProvider } from "./context/AuthContext.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <GoogleOAuthProvider clientId="723184300844-2n2052a4qctq28elvk9m845iee0ula20.apps.googleusercontent.com">
+    <GoogleOAuthProvider clientId="">
       <AuthContextProvider>
         <App />
       </AuthContextProvider>
